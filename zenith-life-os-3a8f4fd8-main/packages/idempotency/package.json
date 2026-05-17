@@ -3,15 +3,12 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "exports": {
-    ".": "./src/handler.ts"
-  },
+  "main": "src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@zenith/shared": "workspace:*",
-    "@zenith/db": "workspace:*"
+    "@zenith/shared": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

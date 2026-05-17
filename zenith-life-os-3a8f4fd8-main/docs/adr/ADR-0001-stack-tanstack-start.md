@@ -6,49 +6,48 @@ Accepted
 
 ## Context
 
-The project started with TanStack Start + Cloudflare Workers as the primary framework.
-However, dead code using `next/server` (NextRequest/NextResponse) was left in `src/app/api/`.
-This caused confusion about the true stack and made the codebase appear broken.
+The original plan referenced Next.js App Router. During initial implementation, TanStack Start was chosen instead due to:
 
-The project requires:
-- SSR support for SEO and initial load
-- Desktop PWA with offline capability
-- Server-side auth with httpOnly cookies
-- Edge deployment (Cloudflare Workers)
-- RTL + Dark mode first
+1. **Cloudflare Workers deployment**: TanStack Start runs natively on CF Workers with `@cloudflare/vite-plugin`. Next.js on CF Workers requires `@opennextjs/cloudflare` which is experimental.
+2. **Vite ecosystem**: TanStack Start uses Vite, enabling fast HMR, smaller bundles, and plugin compatibility.
+3. **React 19 Server Functions**: TanStack Start supports React 19 server functions without the Next.js App Router lock-in.
+4. **PWA compatibility**: Service Worker registration and manifest work cleanly with Vite's build pipeline.
 
 ## Decision
 
-**Keep TanStack Start on Cloudflare Workers** as the primary stack.
+Use **TanStack Start** with **Vite** on **Cloudflare Workers** as the web framework.
 
-- All API routes use TanStack server functions or Hono router under `src/api/`
-- No `next/server`, `NextRequest`, `NextResponse` anywhere in codebase
-- Deployment target: Cloudflare Workers via `wrangler`
-- SSR via TanStack Start server entry (`src/server.ts`)
-- Auth cookies handled server-side via TanStack server functions
+All API routes use TanStack server functions or standard Web Fetch handlers registered in `src/server.ts`, NOT Next.js App Router `route.ts` handlers.
 
 ## Consequences
 
-- Must remove `src/app/api/` directory entirely
-- Must ensure `@supabase/ssr` works under Cloudflare Workers
-- Must implement CSP nonce in `src/server.ts` middleware
-- Must implement CSRF via custom cookie/header pattern (no Next.js middleware)
-- Service Worker must be manually registered (no next-pwa)
+### Positive
+
+- Full control over the request/response pipeline via CF Workers fetch handler.
+- Vite plugin ecosystem (Tailwind, path aliases, etc.) works natively.
+- No vendor lock-in to Vercel deployment.
+- Smaller bundle sizes than Next.js.
+
+### Negative
+
+- No automatic `middleware.ts` convention (must implement manually in `src/server.ts`).
+- Smaller community than Next.js — fewer examples for auth/middleware patterns.
+- Must implement CSP nonce injection, CSRF, and security headers manually.
+
+### Migration Impact
+
+- All `src/app/api/**/route.ts` files using `NextRequest`/`NextResponse` are **dead code** and must be deleted.
+- All `next/server` imports are banned via ESLint rule.
+- Server-side auth uses `@supabase/ssr` with cookie adapter, not Next.js `cookies()`.
 
 ## Alternatives Considered
 
-- **Next.js App Router**: Would require full migration, loss of Cloudflare edge deployment
-- **Hybrid**: Rejected — mixing frameworks creates exactly the bugs found in review
+1. **Next.js App Router on Vercel**: More mature, but locks deployment to Vercel and adds complexity for CF Workers.
+2. **Hono on CF Workers**: Lightweight, but lacks built-in SSR/React integration.
+3. **Remix**: Good CF support but TanStack Router was already in use.
 
 ## Security Impact
 
-- Server functions handle auth, no client-side token storage
-- CSP headers set in `src/server.ts` response wrapper
-- CSRF tokens issued server-side, validated on mutations
-
-## Migration Plan
-
-1. Delete `src/app/` directory
-2. Consolidate all API logic under `src/api/` with TanStack server functions
-3. Add security headers middleware in `src/server.ts`
-4. Implement `@supabase/ssr` cookie adapter for Cloudflare Workers
+- Security headers must be added manually in `src/server.ts` (CSP, HSTS, COOP, CORP, X-Content-Type-Options).
+- CSRF protection must be implemented as middleware in the fetch handler.
+- Auth session management via httpOnly cookies requires explicit implementation.

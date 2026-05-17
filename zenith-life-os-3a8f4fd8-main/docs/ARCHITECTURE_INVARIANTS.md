@@ -1,69 +1,82 @@
 # Architecture Invariants — Zenith Life OS
 
-> These invariants MUST be true at ALL times. CI gates enforce them.
-> Violating any invariant blocks the PR from merging.
+> **These invariants are NON-NEGOTIABLE. Any violation blocks CI and deployment.**
 
-## I-01: Monorepo Structure
-- Root has `pnpm-workspace.yaml`
-- Apps live under `apps/`
-- Shared code lives under `packages/`
-- No code at root `/src/` level
+## I-001: ULID-Only Business IDs
 
-## I-02: Stack Purity
-- TanStack Start only (no Next.js, no Remix, no SvelteKit)
-- No `next/server`, `NextRequest`, `NextResponse` imports
-- Cloudflare Workers deployment target
+All tables with business data use `TEXT PRIMARY KEY CHECK (public.is_ulid(id))`.
+No `UUID`, no `gen_random_uuid()`, no `serial`.
 
-## I-03: ULID TEXT IDs
-- All business tables use `id TEXT PRIMARY KEY CHECK (public.is_ulid(id))`
-- No UUID PRIMARY KEY on business tables
-- No SERIAL/BIGSERIAL
-- Supabase auth.users UUID mapped via `users.auth_uid`
+## I-002: Workspace-Scoped RLS
 
-## I-04: RLS FORCE
-- Every table with user data has `ENABLE ROW LEVEL SECURITY`
-- Every table with user data has `FORCE ROW LEVEL SECURITY`
-- No `USING (true)` without explicit `-- ALLOW:` comment
-- Workspace isolation via `current_workspace_id()` function
+Every table with user data has:
+```sql
+ALTER TABLE t ENABLE ROW LEVEL SECURITY;
+ALTER TABLE t FORCE ROW LEVEL SECURITY;
+```
+All policies use `workspace_id = public.current_workspace_id()`.
+No `auth.uid()` in policies. No `USING (true)`.
 
-## I-05: Result Pattern
-- Business logic returns `Result<T, AppError>`
-- `throw` only at boundaries (route handlers)
-- Error codes from `@zenith/shared/errors/registry`
-- API envelope: `{ ok, data }` or `{ ok, error }`
+## I-003: Zero-Knowledge Vault
 
-## I-06: Clock Abstraction
-- No `new Date()` in business logic
-- All time via `Clock` interface from `@zenith/shared/time`
-- Tests use `fixedClock()`
+Vault plaintext never appears in:
+- AI prompts (guard: `assertNoVaultPlaintext()`)
+- Server logs (guard: CI script `check-no-vault-leak`)
+- Client-side code (guard: vault data never in API responses without decrypt)
+- localStorage/sessionStorage (guard: CI script `check-no-localstorage-secrets`)
 
-## I-07: Server-Side Auth
-- No auth tokens in localStorage/sessionStorage
-- httpOnly + Secure + SameSite=Lax cookies
-- CSRF token validated on mutations
-- Session rotation on signin/refresh
+## I-004: No eval/Function/Dynamic Import
 
-## I-08: AI Gateway
-- No direct `openai`/`anthropic` imports outside `packages/ai`
-- CI script blocks violations
-- Vault plaintext never reaches AI prompts
+The formula engine and all server code must never use:
+- `eval()`
+- `new Function()`
+- Dynamic `import()` with user-controlled strings
+- `Date.now()` or `Math.random()` in business logic (use injected Clock/RNG)
 
-## I-09: Donations Only
-- No subscriptions, no billing, no paywalls
-- `donations` table exists
-- No feature gating by payment tier
+## I-005: Server-Side Formula Evaluation
 
-## I-10: Wave Freezing
-- Each wave frozen with `git tag w0X-frozen`
-- No `.md` files as freeze markers
-- Tag must exist before next wave starts
+Client sends expression string → server parses to AST → evaluates with typed operations.
+AST never leaves the server. Client never sends AST.
 
-## I-11: No eval/Function
-- No `eval()`, `new Function()`, `import()` dynamic execution
-- Formula engine uses recursive descent parsing
-- CI script scans for violations
+## I-006: No Direct AI Provider Imports
 
-## I-12: Idempotency
-- Every mutation endpoint requires `Idempotency-Key` header
-- `api_idempotency` table stores processed keys (24h TTL)
-- Duplicate requests return cached response
+All AI access goes through `@zenith/ai` gateway. Direct imports of `openai`, `@anthropic-ai/sdk`, etc. are banned by ESLint rule and CI gate.
+
+## I-007: Deterministic Business Logic
+
+All business logic uses:
+- `Result<T>` pattern (no thrown errors in core logic)
+- Injected `Clock` (no `new Date()` or `Date.now()`)
+- Injected `IdGenerator` (no `crypto.randomUUID()` in business layer)
+- `FormulaValue` discriminated union (no `any`)
+
+## I-008: Monorepo Structure
+
+```
+├── apps/web/         # TanStack Start application
+├── packages/shared/  # Shared types, Result, ApiEnvelope, IDs
+├── packages/db/      # Database client, queries
+├── packages/ai/      # AI gateway (sole AI entry point)
+├── packages/crypto/  # Vault, encryption
+├── packages/audit/   # Security event logging
+├── packages/idempotency/ # Mutation deduplication
+```
+
+Root `package.json` is monorepo-only (turbo, tsx, typescript). No app dependencies at root.
+
+## I-009: Security Headers
+
+Every response includes:
+- `Content-Security-Policy` with nonce
+- `Strict-Transport-Security` with preload
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Cross-Origin-Opener-Policy: same-origin`
+- `Cross-Origin-Resource-Policy: same-origin`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()`
+
+## I-010: Donations-Only Monetization
+
+No `subscriptions`, `plans`, `invoices`, `pricing_tiers` tables. See ADR-0008.
+The `donations` table is the sole financial table.

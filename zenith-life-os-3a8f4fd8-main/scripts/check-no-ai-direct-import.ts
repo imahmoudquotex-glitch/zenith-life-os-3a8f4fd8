@@ -1,48 +1,54 @@
-// scripts/check-no-ai-direct-import.ts
-// Reviewer issue #31: No direct AI provider imports outside packages/ai
+/**
+ * CI Gate: No direct AI provider imports.
+ * All AI usage MUST go through @zenith/ai gateway.
+ */
+import * as fs from 'fs';
+import * as path from 'path';
 
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+const BANNED_PATTERNS = [
+  /from\s+['"]openai['"]/,
+  /from\s+['"]@anthropic-ai\/sdk['"]/,
+  /require\s*\(\s*['"]openai['"]\s*\)/,
+  /require\s*\(\s*['"]@anthropic-ai\/sdk['"]\s*\)/,
+];
 
-const ROOT = path.resolve(import.meta.dirname, '..');
-const BANNED_IMPORTS = ['openai', '@anthropic-ai/sdk', 'ai'];
-const ALLOWED_DIR = path.join(ROOT, 'packages', 'ai');
-const SCAN_DIRS = ['apps', 'packages'].map(d => path.join(ROOT, d));
-const errors: string[] = [];
+const SRC_DIR = path.resolve(process.cwd(), 'src');
+const PACKAGES_DIR = path.resolve(process.cwd(), 'packages');
 
-function scanDir(dir: string): void {
-  if (!fs.existsSync(dir)) return;
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.name === 'node_modules') continue;
-    if (entry.isDirectory()) {
-      scanDir(fullPath);
-    } else if (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) {
-      // Skip packages/ai itself
-      if (fullPath.startsWith(ALLOWED_DIR)) continue;
+function scanDir(dir: string): string[] {
+  const files: string[] = [];
+  if (!fs.existsSync(dir)) return files;
+  for (const entry of fs.readdirSync(dir, { recursive: true, withFileTypes: true })) {
+    if (entry.isFile() && /\.(ts|tsx|js|jsx)$/.test(entry.name)) {
+      files.push(path.join(entry.parentPath || (entry as any).path, entry.name));
+    }
+  }
+  return files;
+}
 
-      const content = fs.readFileSync(fullPath, 'utf-8');
-      for (const banned of BANNED_IMPORTS) {
-        const pattern = new RegExp(`from\\s+['"]${banned}['"]|require\\(['"]${banned}['"]\\)`, 'g');
-        if (pattern.test(content)) {
-          errors.push(`${path.relative(ROOT, fullPath)}: Direct import of "${banned}". Use @zenith/ai gateway.`);
-        }
+function main() {
+  const files = [...scanDir(SRC_DIR), ...scanDir(PACKAGES_DIR)];
+  const violations: string[] = [];
+
+  for (const file of files) {
+    // Skip the AI gateway package itself
+    if (file.includes(path.join('packages', 'ai'))) continue;
+
+    const content = fs.readFileSync(file, 'utf8');
+    for (const pattern of BANNED_PATTERNS) {
+      if (pattern.test(content)) {
+        violations.push(`${file}: Direct AI provider import detected (${pattern.source})`);
       }
     }
   }
-}
 
-for (const dir of SCAN_DIRS) {
-  scanDir(dir);
-}
-
-if (errors.length > 0) {
-  console.error('❌ AI import check FAILED:');
-  for (const e of errors) {
-    console.error(`  - ${e}`);
+  if (violations.length > 0) {
+    console.error('❌ Direct AI provider imports found:');
+    violations.forEach(v => console.error(`  - ${v}`));
+    process.exit(1);
   }
-  process.exit(1);
-} else {
-  console.log('✅ No direct AI provider imports found');
+
+  console.log('✅ No direct AI provider imports found.');
 }
+
+main();

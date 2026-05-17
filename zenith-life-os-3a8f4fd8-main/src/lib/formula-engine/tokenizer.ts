@@ -21,6 +21,15 @@ const OPERATORS = new Set(['+', '-', '*', '/', '==', '!=', '>', '<', '>=', '<=',
 const PUNCTUATION = new Set(['(', ')', '[', ']', ',', '.']);
 const KEYWORDS = new Set(['true', 'false', 'null']);
 
+// Issue #27: Block dangerous identifiers that could enable prototype pollution or code execution
+const BLOCKED_IDENTIFIERS = new Set([
+  'eval', 'Function', 'constructor', 'prototype', '__proto__',
+  'globalThis', 'window', 'document', 'import', 'require', 'process',
+  'Proxy', 'Reflect', 'Symbol', 'Object', 'Array',
+  'setTimeout', 'setInterval', 'fetch', 'XMLHttpRequest',
+  'module', 'exports', '__dirname', '__filename',
+]);
+
 export class Tokenizer {
   private input: string;
   private current: number = 0;
@@ -130,11 +139,17 @@ export class Tokenizer {
       value += this.input[this.current];
       this.current++;
     }
+
+    // Issue #27: Reject dangerous identifiers
+    if (BLOCKED_IDENTIFIERS.has(value)) {
+      throw new SafeFormulaError('FORBIDDEN_IDENTIFIER', `Forbidden identifier: ${value}`);
+    }
+
     if (KEYWORDS.has(value)) {
       if (value === 'true' || value === 'false') {
         return { type: 'Boolean', value, start, end: this.current };
       }
-      return { type: 'Identifier', value, start, end: this.current }; // handle null contextually or strictly
+      return { type: 'Identifier', value, start, end: this.current };
     }
     return { type: 'Identifier', value, start, end: this.current };
   }

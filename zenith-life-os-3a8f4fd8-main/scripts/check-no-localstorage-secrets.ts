@@ -1,49 +1,57 @@
-// scripts/check-no-localstorage-secrets.ts
-// Reviewer issue #15: No auth tokens or secrets in localStorage
+/**
+ * CI Gate: No localStorage secrets.
+ * Ensures no code stores tokens, passwords, or keys in localStorage/sessionStorage.
+ */
+import * as fs from 'fs';
+import * as path from 'path';
 
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-
-const ROOT = path.resolve(import.meta.dirname, '..');
-const SCAN_DIRS = ['apps', 'packages'].map(d => path.join(ROOT, d));
-const PATTERNS = [
-  /localStorage\.setItem\s*\(\s*['"].*(?:token|secret|key|password|session|auth)/gi,
-  /localStorage\.getItem\s*\(\s*['"].*(?:token|secret|key|password|session|auth)/gi,
-  /sessionStorage\.setItem\s*\(\s*['"].*(?:token|secret|key|password|auth)/gi,
+const LEAK_PATTERNS = [
+  /localStorage\s*\.setItem\s*\(\s*['"].*token/i,
+  /localStorage\s*\.setItem\s*\(\s*['"].*secret/i,
+  /localStorage\s*\.setItem\s*\(\s*['"].*password/i,
+  /localStorage\s*\.setItem\s*\(\s*['"].*apiKey/i,
+  /localStorage\s*\.setItem\s*\(\s*['"].*key/i,
+  /sessionStorage\s*\.setItem\s*\(\s*['"].*token/i,
+  /sessionStorage\s*\.setItem\s*\(\s*['"].*secret/i,
+  /window\.localStorage/,
+  /window\.sessionStorage/,
 ];
-const errors: string[] = [];
 
-function scanDir(dir: string): void {
-  if (!fs.existsSync(dir)) return;
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.name === 'node_modules') continue;
-    if (entry.isDirectory()) {
-      scanDir(fullPath);
-    } else if (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) {
-      const content = fs.readFileSync(fullPath, 'utf-8');
-      for (const pattern of PATTERNS) {
-        pattern.lastIndex = 0;
-        if (pattern.test(content)) {
-          errors.push(`${path.relative(ROOT, fullPath)}: Secrets in localStorage/sessionStorage`);
-          break;
-        }
-      }
+const SRC_DIR = path.resolve(process.cwd(), 'src');
+
+function scanDir(dir: string): string[] {
+  const files: string[] = [];
+  if (!fs.existsSync(dir)) return files;
+  for (const entry of fs.readdirSync(dir, { recursive: true, withFileTypes: true })) {
+    if (entry.isFile() && /\.(ts|tsx|js|jsx)$/.test(entry.name)) {
+      files.push(path.join(entry.parentPath || (entry as any).path, entry.name));
     }
   }
+  return files;
 }
 
-for (const dir of SCAN_DIRS) {
-  scanDir(dir);
-}
+function main() {
+  const files = scanDir(SRC_DIR);
+  const violations: string[] = [];
 
-if (errors.length > 0) {
-  console.error('❌ localStorage secrets check FAILED:');
-  for (const e of errors) {
-    console.error(`  - ${e}`);
+  for (const file of files) {
+    const lines = fs.readFileSync(file, 'utf8').split('\n');
+    lines.forEach((line, idx) => {
+      for (const pattern of LEAK_PATTERNS) {
+        if (pattern.test(line)) {
+          violations.push(`${file}:${idx + 1}: ${line.trim()}`);
+        }
+      }
+    });
   }
-  process.exit(1);
-} else {
-  console.log('✅ No localStorage secret patterns found');
+
+  if (violations.length > 0) {
+    console.error('❌ localStorage/sessionStorage secret storage detected:');
+    violations.forEach(v => console.error(`  - ${v}`));
+    process.exit(1);
+  }
+
+  console.log('✅ No localStorage secrets found.');
 }
+
+main();

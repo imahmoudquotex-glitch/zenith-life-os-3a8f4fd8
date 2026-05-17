@@ -6,8 +6,8 @@ BEGIN;
 
 CREATE TABLE IF NOT EXISTS public.blocks (
   id                      TEXT         PRIMARY KEY CHECK (public.is_ulid(id)),
-  workspace_id            TEXT         NOT NULL,
-  page_id                 TEXT         NOT NULL,
+  workspace_id            TEXT         NOT NULL REFERENCES public.workspaces(id) ON DELETE CASCADE,
+  page_id                 TEXT         NOT NULL REFERENCES public.pages(id) ON DELETE CASCADE,
   parent_block_id         TEXT         REFERENCES public.blocks(id) ON DELETE SET NULL,
   type                    TEXT         NOT NULL,
   content_json            JSONB        NOT NULL DEFAULT '{}'::jsonb,
@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS public.blocks (
   depth                   INT          NOT NULL DEFAULT 0,
   is_deleted              BOOLEAN      NOT NULL DEFAULT false,
   deleted_at              TIMESTAMPTZ,
-  created_by_user_id      TEXT         NOT NULL,
-  last_edited_by_user_id  TEXT         NOT NULL,
+  created_by_user_id      TEXT         NOT NULL REFERENCES public.users(id),
+  last_edited_by_user_id  TEXT         NOT NULL REFERENCES public.users(id),
   created_at              TIMESTAMPTZ  NOT NULL DEFAULT now(),
   updated_at              TIMESTAMPTZ  NOT NULL DEFAULT now(),
   version                 INT          NOT NULL DEFAULT 1,

@@ -1,14 +1,15 @@
-name: CI
+name: CI — Zenith Life OS
 
 on:
   push:
-    branches: [main, develop, 'repair/**']
+    branches: [main, develop, "repair/*"]
   pull_request:
     branches: [main]
 
 jobs:
   quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -22,19 +23,42 @@ jobs:
           node-version: 20
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm lint --max-warnings 0
-      - run: pnpm test
-      - run: pnpm build
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-      # Security gates
-      - run: pnpm tsx scripts/check-migrations.ts
-      - run: pnpm tsx scripts/check-rls.ts
-      - run: pnpm tsx scripts/check-naming.ts
-      - run: pnpm tsx scripts/check-no-ai-direct-import.ts
-      - run: pnpm tsx scripts/check-no-vault-leak.ts
-      - run: pnpm tsx scripts/check-no-localstorage-secrets.ts
-      - run: pnpm tsx scripts/check-no-eval.ts
-      - run: pnpm tsx scripts/check-no-uuid-columns.ts
+      - name: TypeScript check
+        run: pnpm typecheck
 
+      - name: Lint
+        run: pnpm lint -- --max-warnings 0
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      # ── Security & Architecture Gates ────────────────────────────────────
+      - name: "Gate: No eval/Function in formula engine"
+        run: pnpm tsx scripts/check-no-eval.ts
+
+      - name: "Gate: No UUID columns in migrations"
+        run: pnpm tsx scripts/check-no-uuid-columns.ts
+
+      - name: "Gate: Migration integrity"
+        run: pnpm tsx scripts/check-migrations.ts
+
+      - name: "Gate: RLS enforcement"
+        run: pnpm tsx scripts/check-rls.ts
+
+      - name: "Gate: Naming conventions"
+        run: pnpm tsx scripts/check-naming.ts
+
+      - name: "Gate: No direct AI provider imports"
+        run: pnpm tsx scripts/check-no-ai-direct-import.ts
+
+      - name: "Gate: No vault plaintext leak"
+        run: pnpm tsx scripts/check-no-vault-leak.ts
+
+      - name: "Gate: No localStorage secrets"
+        run: pnpm tsx scripts/check-no-localstorage-secrets.ts
