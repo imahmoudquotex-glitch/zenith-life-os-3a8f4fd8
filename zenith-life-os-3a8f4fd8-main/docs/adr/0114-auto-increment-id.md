@@ -1,0 +1,1 @@
+# ADR: 0114-auto-increment-id.md\n\nStatus: Accepted\n\nContext: Wave 07 implementation.\n

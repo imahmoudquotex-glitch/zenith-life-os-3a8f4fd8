@@ -1,0 +1,1 @@
+# ADR: 0109-view-configs-jsonb.md\n\nStatus: Accepted\n\nContext: Wave 07 implementation.\n

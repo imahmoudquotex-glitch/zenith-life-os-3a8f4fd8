@@ -1,0 +1,98 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@theme inline {
+  --font-cairo: "Cairo", sans-serif;
+  --font-inter: "Inter", sans-serif;
+  --color-background: #030504;
+  --color-foreground: #F4F7F5;
+  --color-muted: #647067;
+  --color-muted-foreground: #A7B3AB;
+  --color-accent: #4ADE80;
+  --color-primary: #22C55E;
+  --color-border: rgba(255,255,255,0.08);
+}
+
+:root { color-scheme: dark; }
+
+html, body, #root {
+  height: 100%;
+  background: #030504;
+  color: #F4F7F5;
+  font-family: "Cairo", sans-serif;
+  overflow-x: hidden;
+}
+
+/* RTL/LTR font selection */
+html[dir="rtl"], html[dir="rtl"] body { font-family: "Cairo", sans-serif; }
+html[dir="ltr"], html[dir="ltr"] body { font-family: "Inter", "Cairo", sans-serif; }
+
+* { -webkit-font-smoothing: antialiased; }
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* Focus visible — keyboard accessibility */
+:focus-visible {
+  outline: 2px solid #4ADE80;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skip to main content — a11y */
+.skip-to-main {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  background: #4ADE80;
+  color: #030504;
+  font-weight: 700;
+  border-radius: 0 0 6px 6px;
+  transition: top 0.2s;
+}
+.skip-to-main:focus { top: 0; }
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(34,197,94,0.25); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(34,197,94,0.45); }
+
+.glass {
+  background: rgba(10,16,13,0.62);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px) saturate(140%);
+}
+
+.glass-strong {
+  background: rgba(13,20,16,0.92);
+  border: 1px solid rgba(255,255,255,0.10);
+  backdrop-filter: blur(28px) saturate(160%);
+}
+
+.text-grad-green {
+  background: linear-gradient(135deg, #4ADE80 0%, #A7C957 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Autofill override for dark theme */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active{
+  -webkit-box-shadow: 0 0 0 50px #0A100D inset !important;
+  -webkit-text-fill-color: #F4F7F5 !important;
+  caret-color: #4ADE80 !important;
+  border-radius: 0 !important;
+}

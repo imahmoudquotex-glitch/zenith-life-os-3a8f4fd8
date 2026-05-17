@@ -1,0 +1,1 @@
+# ADR: 0115-soft-delete-cascade.md\n\nStatus: Accepted\n\nContext: Wave 07 implementation.\n

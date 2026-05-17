@@ -1,0 +1,1 @@
+# ADR: 0106-fractional-indexing-db-rows.md\n\nStatus: Accepted\n\nContext: Wave 07 implementation.\n

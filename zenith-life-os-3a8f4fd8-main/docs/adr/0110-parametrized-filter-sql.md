@@ -1,0 +1,1 @@
+# ADR: 0110-parametrized-filter-sql.md\n\nStatus: Accepted\n\nContext: Wave 07 implementation.\n

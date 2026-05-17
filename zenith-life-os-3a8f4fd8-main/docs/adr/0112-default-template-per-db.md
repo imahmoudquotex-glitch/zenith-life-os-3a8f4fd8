@@ -1,0 +1,1 @@
+# ADR: 0112-default-template-per-db.md\n\nStatus: Accepted\n\nContext: Wave 07 implementation.\n
