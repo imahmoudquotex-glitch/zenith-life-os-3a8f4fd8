@@ -1,56 +1,25 @@
--- Wave 06 — Files & Media Pipeline Migration
+-- Wave 06 — Files & Media Pipeline Migration (Canonical)
 -- Migration 0612: files table + RLS + request_file_upload RPC + quota
--- Supabase Migration: supabase/migrations/0612_files_pipeline.sql
+-- FIXED: UUID → TEXT ULID, auth.uid() → current_user_id(), gen_random_uuid() → app ULID
 
 BEGIN;
 
+-- NOTE: 0611 creates the same tables. 0612 exists as the canonical/corrected version.
+-- If 0611 already ran, this will skip via IF NOT EXISTS.
+
 -- ─── Files table ─────────────────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS public.files (
-  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  workspace_id  UUID NOT NULL REFERENCES public.workspaces(id) ON DELETE CASCADE,
-  user_id       UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  bucket        TEXT NOT NULL DEFAULT 'blocks-media',
-  object_key    TEXT NOT NULL,
-  original_name TEXT NOT NULL,
-  mime_type     TEXT NOT NULL,
-  size_bytes    BIGINT NOT NULL CHECK (size_bytes >= 0),
-  width         INT,
-  height        INT,
-  duration_ms   INT,
-  hash_sha256   TEXT,
-  is_processed  BOOLEAN NOT NULL DEFAULT FALSE,
-  is_deleted    BOOLEAN NOT NULL DEFAULT FALSE,
-  deleted_at    TIMESTAMPTZ,
-  variants      JSONB NOT NULL DEFAULT '{}'::jsonb,
-  metadata      JSONB NOT NULL DEFAULT '{}'::jsonb,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT uq_object_key UNIQUE (bucket, object_key),
-  CONSTRAINT chk_mime_not_empty CHECK (length(trim(mime_type)) > 0)
-);
+-- Already created in 0611. Add unique constraint if not present.
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_object_key') THEN
+    ALTER TABLE public.files ADD CONSTRAINT uq_object_key UNIQUE (bucket, object_key);
+  END IF;
+END $$;
 
-CREATE INDEX idx_files_workspace ON public.files(workspace_id) WHERE is_deleted = false;
-CREATE INDEX idx_files_user ON public.files(user_id) WHERE is_deleted = false;
-
-ALTER TABLE public.files ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.files FORCE ROW LEVEL SECURITY;
-
-CREATE POLICY files_isolation ON public.files
-  USING (workspace_id = current_workspace_id())
-  WITH CHECK (workspace_id = current_workspace_id());
-
--- ─── Workspace Storage Quotas ─────────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS public.workspace_storage_quotas (
-  workspace_id  UUID PRIMARY KEY REFERENCES public.workspaces(id) ON DELETE CASCADE,
-  used_bytes    BIGINT NOT NULL DEFAULT 0 CHECK (used_bytes >= 0),
-  quota_bytes   BIGINT NOT NULL DEFAULT 5368709120 CHECK (quota_bytes > 0), -- 5 GB
-  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-ALTER TABLE public.workspace_storage_quotas ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.workspace_storage_quotas FORCE ROW LEVEL SECURITY;
-
-CREATE POLICY quota_isolation ON public.workspace_storage_quotas
-  USING (workspace_id = current_workspace_id());
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_mime_not_empty') THEN
+    ALTER TABLE public.files ADD CONSTRAINT chk_mime_not_empty CHECK (length(trim(mime_type)) > 0);
+  END IF;
+END $$;
 
 -- Auto-create quota row for each new workspace
 CREATE OR REPLACE FUNCTION init_workspace_quota() RETURNS TRIGGER LANGUAGE plpgsql AS $$
@@ -66,21 +35,25 @@ CREATE TRIGGER trg_init_workspace_quota
   AFTER INSERT ON public.workspaces
   FOR EACH ROW EXECUTE FUNCTION init_workspace_quota();
 
--- ─── request_file_upload RPC ──────────────────────────────────────────────────
--- Checks quota, creates DB record, returns signed info
+-- ─── request_file_upload RPC (FIXED: no gen_random_uuid) ──────────────────────
 CREATE OR REPLACE FUNCTION public.request_file_upload(
-  p_workspace_id UUID,
+  p_workspace_id TEXT,
   p_mime_type    TEXT,
   p_size_bytes   BIGINT,
-  p_original_name TEXT DEFAULT 'file'
+  p_original_name TEXT DEFAULT 'file',
+  p_file_id      TEXT DEFAULT NULL  -- ULID from app layer
 )
 RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public, pg_temp AS $$
 DECLARE
   v_quota    public.workspace_storage_quotas;
-  v_file_id  UUID := gen_random_uuid();
   v_obj_key  TEXT;
 BEGIN
+  -- Validate ULID
+  IF p_file_id IS NOT NULL AND NOT public.is_ulid(p_file_id) THEN
+    RAISE EXCEPTION 'INVALID_FILE_ID';
+  END IF;
+
   -- Check quota
   SELECT * INTO v_quota FROM public.workspace_storage_quotas WHERE workspace_id = p_workspace_id;
   IF v_quota.used_bytes + p_size_bytes > v_quota.quota_bytes THEN
@@ -89,12 +62,12 @@ BEGIN
   END IF;
 
   -- Build object key
-  v_obj_key := p_workspace_id::text || '/' || v_file_id::text || '-' || 
+  v_obj_key := p_workspace_id || '/' || p_file_id || '-' || 
                regexp_replace(p_original_name, '[^a-zA-Z0-9._-]', '_', 'g');
 
   -- Create file record
   INSERT INTO public.files(id, workspace_id, user_id, bucket, object_key, original_name, mime_type, size_bytes)
-  VALUES (v_file_id, p_workspace_id, auth.uid(), 'blocks-media', v_obj_key, p_original_name, p_mime_type, p_size_bytes);
+  VALUES (p_file_id, p_workspace_id, public.current_user_id(), 'blocks-media', v_obj_key, p_original_name, p_mime_type, p_size_bytes);
 
   -- Reserve quota
   UPDATE public.workspace_storage_quotas
@@ -102,7 +75,7 @@ BEGIN
   WHERE workspace_id = p_workspace_id;
 
   RETURN jsonb_build_object(
-    'file_id', v_file_id,
+    'file_id', p_file_id,
     'object_key', v_obj_key,
     'bucket', 'blocks-media'
   );
@@ -110,7 +83,7 @@ END $$;
 
 -- ─── mark_file_processed RPC ─────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.mark_file_processed(
-  p_file_id UUID,
+  p_file_id TEXT,
   p_variants JSONB DEFAULT '{}'::jsonb
 )
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER
@@ -118,16 +91,16 @@ SET search_path = public, pg_temp AS $$
 BEGIN
   UPDATE public.files
   SET is_processed = true, variants = p_variants
-  WHERE id = p_file_id AND workspace_id = current_workspace_id();
+  WHERE id = p_file_id AND workspace_id = public.current_workspace_id();
 END $$;
 
 -- ─── delete_file RPC (soft delete) ───────────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.delete_file(p_file_id UUID)
+CREATE OR REPLACE FUNCTION public.delete_file(p_file_id TEXT)
 RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public, pg_temp AS $$
 DECLARE
   v_size BIGINT;
-  v_ws   UUID;
+  v_ws   TEXT;
 BEGIN
   SELECT size_bytes, workspace_id INTO v_size, v_ws
   FROM public.files WHERE id = p_file_id AND is_deleted = false;

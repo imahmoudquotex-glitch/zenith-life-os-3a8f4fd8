@@ -45,8 +45,6 @@ ALTER TABLE public.synced_block_refs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.synced_block_refs FORCE ROW LEVEL SECURITY;
 
 CREATE POLICY synced_refs_isolation ON public.synced_block_refs
-  USING (workspace_id IN (
-    SELECT workspace_id FROM public.blocks WHERE created_by_user_id = auth.uid()::text LIMIT 1
-  ));
+  USING (workspace_id = public.current_workspace_id());
 
 COMMIT;

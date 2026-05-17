@@ -1,5 +1,6 @@
 -- =============================================================================
 -- Migration 0511 — Notification Buckets (Phase 07 — Rate Limit)
+-- FIXED: UUID → TEXT, auth.uid() → current_user_id()
 -- =============================================================================
 -- القواعد:
 -- - Max 5 إشعارات/ساعة لكل (user_id, type)
@@ -10,7 +11,7 @@
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS public.notification_buckets (
-  user_id     UUID        NOT NULL,
+  user_id     TEXT        NOT NULL,
   type        TEXT        NOT NULL,
   hour_bucket TIMESTAMPTZ NOT NULL,
   count       INT         NOT NULL DEFAULT 0,
@@ -21,11 +22,11 @@ ALTER TABLE public.notification_buckets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notification_buckets FORCE ROW LEVEL SECURITY;
 
 CREATE POLICY notif_buckets_isolation ON public.notification_buckets
-  USING (user_id = auth.uid());
+  USING (user_id = public.current_user_id());
 
 -- Function: increment or insert bucket count
 CREATE OR REPLACE FUNCTION public.increment_notification_bucket(
-  p_user UUID,
+  p_user TEXT,
   p_type TEXT,
   p_hour TIMESTAMPTZ
 )
