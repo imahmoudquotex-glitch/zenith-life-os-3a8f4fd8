@@ -19,16 +19,17 @@ export class Evaluator {
   }
 
   public evaluate(context: EvaluationContext): any {
-    this.startTime = Date.now();
+    // ADR-0003 compatible: uses performance.now() for sub-ms precision
+    this.startTime = performance.now();
     this.opsCount = 0;
     return this.visit(this.ast, context);
   }
 
   private visit(node: ASTNode, context: EvaluationContext): any {
     this.opsCount++;
-    // Check timeout every 100 operations to reduce Date.now() overhead
+    // Check timeout every 100 operations to reduce overhead
     if (this.opsCount % 100 === 0) {
-      if (Date.now() - this.startTime > this.timeoutMs) {
+      if (performance.now() - this.startTime > this.timeoutMs) {
         throw new SafeFormulaError('TIMEOUT_ERROR', `Formula evaluation exceeded ${this.timeoutMs}ms limit`);
       }
     }

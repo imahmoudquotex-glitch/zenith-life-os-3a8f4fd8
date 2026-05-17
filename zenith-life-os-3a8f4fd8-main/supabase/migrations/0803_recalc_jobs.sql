@@ -1,22 +1,22 @@
--- Migration 0803: recalc_jobs (DB fallback)
+-- Migration 0803: recalc_jobs + RLS
+-- FIXED: UUID → TEXT ULID
+BEGIN;
 
-CREATE TYPE formula_job_status AS ENUM ('pending', 'processing', 'completed', 'failed');
-
-CREATE TABLE recalc_jobs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
-    formula_id UUID NOT NULL REFERENCES formula_definitions(id) ON DELETE CASCADE,
-    row_id UUID REFERENCES db_rows(id) ON DELETE CASCADE, -- if null, recalc all rows for formula
-    status formula_job_status NOT NULL DEFAULT 'pending',
-    error TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+CREATE TABLE IF NOT EXISTS recalc_jobs (
+    id TEXT PRIMARY KEY CHECK (public.is_ulid(id)),
+    workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    formula_id TEXT NOT NULL REFERENCES formula_definitions(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','running','done','failed')),
+    error_message TEXT,
     started_at TIMESTAMPTZ,
-    completed_at TIMESTAMPTZ
+    completed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 ALTER TABLE recalc_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recalc_jobs FORCE ROW LEVEL SECURITY;
 
+CREATE INDEX idx_recalc_jobs_workspace ON recalc_jobs(workspace_id);
 CREATE INDEX idx_recalc_jobs_status ON recalc_jobs(status) WHERE status = 'pending';
-CREATE INDEX idx_recalc_jobs_workspace_id ON recalc_jobs(workspace_id);
+
+COMMIT;

@@ -1,14 +1,11 @@
 -- =============================================================================
 -- Migration 0602 — Block Versions (Wave 06)
+-- FIXED: ULID check, workspace-based RLS
 -- =============================================================================
--- - حفظ تاريخ كل تعديل على block
--- - prune تلقائي إذا تجاوز 50 version للـ block الواحد
--- =============================================================================
-
 BEGIN;
 
 CREATE TABLE IF NOT EXISTS public.block_versions (
-  id                      TEXT         PRIMARY KEY,
+  id                      TEXT         PRIMARY KEY CHECK (public.is_ulid(id)),
   block_id                TEXT         NOT NULL REFERENCES public.blocks(id) ON DELETE CASCADE,
   workspace_id            TEXT         NOT NULL,
   content_json            JSONB        NOT NULL DEFAULT '{}'::jsonb,
@@ -26,12 +23,15 @@ CREATE OR REPLACE FUNCTION public.capture_block_version()
 RETURNS TRIGGER LANGUAGE plpgsql AS $$
 DECLARE
   v_count INT;
+  v_ulid TEXT;
 BEGIN
-  -- Insert new version
+  -- Generate ULID-like ID using timestamp + random
+  v_ulid = encode(gen_random_bytes(16), 'hex');
+
   INSERT INTO public.block_versions(
     id, block_id, workspace_id, content_json, type, version, last_edited_by_user_id
   ) VALUES (
-    gen_random_uuid()::text,
+    v_ulid,
     NEW.id,
     NEW.workspace_id,
     NEW.content_json,
@@ -40,7 +40,6 @@ BEGIN
     NEW.last_edited_by_user_id
   );
 
-  -- Prune: keep only latest 50
   SELECT COUNT(*) INTO v_count FROM public.block_versions WHERE block_id = NEW.id;
   IF v_count > 50 THEN
     DELETE FROM public.block_versions
@@ -62,11 +61,11 @@ FOR EACH ROW
 WHEN (OLD.content_json IS DISTINCT FROM NEW.content_json OR OLD.type IS DISTINCT FROM NEW.type)
 EXECUTE FUNCTION public.capture_block_version();
 
--- RLS
 ALTER TABLE public.block_versions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.block_versions FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY block_versions_isolation ON public.block_versions
-  USING (last_edited_by_user_id = auth.uid()::text);
+CREATE POLICY block_versions_workspace_read ON public.block_versions
+  FOR SELECT
+  USING (workspace_id = public.current_workspace_id());
 
 COMMIT;

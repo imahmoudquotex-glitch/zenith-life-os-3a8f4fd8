@@ -1,39 +1,24 @@
--- Migration 0807: rls_pack_w08
-
--- formula_definitions
-CREATE POLICY "Users can view formula_definitions in their workspaces"
-    ON formula_definitions FOR SELECT
-    USING (workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()));
-
-CREATE POLICY "Users can create formula_definitions in their workspaces"
-    ON formula_definitions FOR INSERT
-    WITH CHECK (workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()));
-
-CREATE POLICY "Users can update formula_definitions in their workspaces"
-    ON formula_definitions FOR UPDATE
-    USING (workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()))
-    WITH CHECK (workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()));
-
-CREATE POLICY "Users can delete formula_definitions in their workspaces"
-    ON formula_definitions FOR DELETE
-    USING (workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()));
-
--- formula_cache
-CREATE POLICY "Users can view formula_cache in their workspaces"
-    ON formula_cache FOR SELECT
-    USING (workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()));
-
-CREATE POLICY "System can manage formula_cache"
-    ON formula_cache FOR ALL
-    USING (true)
-    WITH CHECK (true);
+-- Migration 0807: RLS Pack W08 (Formula Engine)
+-- FIXED: workspace_members → users_workspaces, no USING(true)
+BEGIN;
 
 -- recalc_jobs
-CREATE POLICY "Users can view recalc_jobs in their workspaces"
-    ON recalc_jobs FOR SELECT
-    USING (workspace_id IN (SELECT workspace_id FROM workspace_members WHERE user_id = auth.uid()));
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='recalc_jobs' AND policyname='recalc_jobs_workspace_read') THEN
+    CREATE POLICY recalc_jobs_workspace_read ON recalc_jobs
+      FOR SELECT
+      USING (workspace_id = public.current_workspace_id());
+  END IF;
+END $$;
 
-CREATE POLICY "System can manage recalc_jobs"
-    ON recalc_jobs FOR ALL
-    USING (true)
-    WITH CHECK (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='recalc_jobs' AND policyname='recalc_jobs_system_write') THEN
+    CREATE POLICY recalc_jobs_system_write ON recalc_jobs
+      FOR ALL
+      -- ALLOW: system context needed for background recalc jobs
+      USING (public.is_system_context())
+      WITH CHECK (public.is_system_context());
+  END IF;
+END $$;
+
+COMMIT;

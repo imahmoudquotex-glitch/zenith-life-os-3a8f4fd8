@@ -35,3 +35,6 @@ jobs:
       - run: pnpm tsx scripts/check-no-ai-direct-import.ts
       - run: pnpm tsx scripts/check-no-vault-leak.ts
       - run: pnpm tsx scripts/check-no-localstorage-secrets.ts
+      - run: pnpm tsx scripts/check-no-eval.ts
+      - run: pnpm tsx scripts/check-no-uuid-columns.ts
+

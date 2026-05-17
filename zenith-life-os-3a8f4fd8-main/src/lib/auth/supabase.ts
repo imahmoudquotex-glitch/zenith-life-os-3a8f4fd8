@@ -1,3 +1,6 @@
+// @zenith/shared — Supabase Browser Client
+// Reviewer issue #15, #38: persistSession MUST be false.
+// Auth tokens live in httpOnly cookies, NOT localStorage.
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
@@ -9,8 +12,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    persistSession: true,
-    autoRefreshToken: true,
+    // SECURITY: persistSession=false → no localStorage tokens
+    // Session managed via httpOnly cookies on server-side
+    persistSession: false,
+    autoRefreshToken: false,
     detectSessionInUrl: false,
     flowType: "pkce",
   },
