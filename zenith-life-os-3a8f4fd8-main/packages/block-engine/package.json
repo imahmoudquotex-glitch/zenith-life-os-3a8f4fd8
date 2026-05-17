@@ -1,0 +1,19 @@
+{
+  "name": "@zenith/block-engine",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./repo": "./src/block-repo.ts",
+    "./service": "./src/block-service.ts",
+    "./sanitizer": "./src/sanitizer.ts"
+  },
+  "dependencies": {
+    "@zenith/shared": "workspace:*",
+    "@zenith/db": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

@@ -1,10 +1,16 @@
 /**
- * packages/db-engine/src/database-repo.ts
+ * @zenith/db-engine — DatabaseRepo
  * CRUD on databases table — NO SQL in routes, all SQL here
+ *
+ * FIXED:
+ * - ❌ throw → ✅ Result pattern
+ * - ❌ new Date() → ✅ Clock abstraction
+ * - ❌ relative import → ✅ @zenith/shared
  */
-import { createClient } from '@supabase/supabase-js'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { generateULID } from '../../block-engine/src/fractional-index'
+import type { Result, AppError } from '@zenith/shared/result'
+import { generateUlid } from '@zenith/shared/ids/ulid'
+import { SystemClock } from '@zenith/shared/time/clock'
 
 export interface Database {
   id: string
@@ -35,35 +41,41 @@ export interface CreateDatabaseInput {
   description?: string
 }
 
+const clock = new SystemClock()
+
 export class DatabaseRepo {
   constructor(private readonly db: SupabaseClient) {}
 
-  async create(input: CreateDatabaseInput): Promise<Database> {
-    const id = generateULID()
+  async create(input: CreateDatabaseInput): Promise<Result<Database, AppError>> {
+    const id = generateUlid()
     const { data, error } = await this.db
       .from('databases')
       .insert({ id, ...input, layout_mode: 'full_page' })
       .select()
       .single()
-    if (error) throw new Error(`DatabaseRepo.create: ${error.message}`)
-    return data as Database
+    if (error) {
+      return { ok: false, error: { code: 'DB_ERROR', message: `DatabaseRepo.create: ${error.message}` } }
+    }
+    return { ok: true, value: data as Database }
   }
 
-  async getById(id: string): Promise<Database | null> {
+  async getById(id: string): Promise<Result<Database | null, AppError>> {
     const { data, error } = await this.db
       .from('databases')
       .select('*')
       .eq('id', id)
       .eq('is_deleted', false)
       .single()
-    if (error?.code === 'PGRST116') return null
-    if (error) throw new Error(`DatabaseRepo.getById: ${error.message}`)
-    return data as Database
+    if (error?.code === 'PGRST116') return { ok: true, value: null }
+    if (error) {
+      return { ok: false, error: { code: 'DB_ERROR', message: `DatabaseRepo.getById: ${error.message}` } }
+    }
+    return { ok: true, value: data as Database }
   }
 
   async update(id: string, patch: Partial<Pick<Database,
     'title' | 'icon_kind' | 'icon_value' | 'cover_url' | 'description' | 'default_template_id'
-  >>): Promise<Database> {
+  >>): Promise<Result<Database, AppError>> {
     const { data, error } = await this.db
       .from('databases')
       .update(patch)
@@ -71,47 +83,59 @@ export class DatabaseRepo {
       .eq('is_deleted', false)
       .select()
       .single()
-    if (error) throw new Error(`DatabaseRepo.update: ${error.message}`)
-    return data as Database
+    if (error) {
+      return { ok: false, error: { code: 'DB_ERROR', message: `DatabaseRepo.update: ${error.message}` } }
+    }
+    return { ok: true, value: data as Database }
   }
 
-  async softDelete(id: string): Promise<void> {
+  async softDelete(id: string): Promise<Result<void, AppError>> {
     const { error } = await this.db
       .from('databases')
-      .update({ is_deleted: true, deleted_at: new Date().toISOString() })
+      .update({ is_deleted: true, deleted_at: clock.now().toISOString() })
       .eq('id', id)
       .eq('is_system', false) // system DBs cannot be deleted
-    if (error) throw new Error(`DatabaseRepo.softDelete: ${error.message}`)
+    if (error) {
+      return { ok: false, error: { code: 'DB_ERROR', message: `DatabaseRepo.softDelete: ${error.message}` } }
+    }
+    return { ok: true, value: undefined }
   }
 
-  async listByWorkspace(includeDeleted = false): Promise<Database[]> {
+  async listByWorkspace(includeDeleted = false): Promise<Result<Database[], AppError>> {
     let q = this.db.from('databases').select('*').order('created_at', { ascending: true })
     if (!includeDeleted) q = q.eq('is_deleted', false)
     const { data, error } = await q
-    if (error) throw new Error(`DatabaseRepo.listByWorkspace: ${error.message}`)
-    return (data ?? []) as Database[]
+    if (error) {
+      return { ok: false, error: { code: 'DB_ERROR', message: `DatabaseRepo.listByWorkspace: ${error.message}` } }
+    }
+    return { ok: true, value: (data ?? []) as Database[] }
   }
 
   async convertLayout(
     dbId: string,
     targetMode: 'full_page' | 'inline',
     targetPageId?: string
-  ): Promise<void> {
+  ): Promise<Result<void, AppError>> {
     const { error } = await this.db.rpc('convert_database_layout', {
       p_db_id: dbId,
       p_target_mode: targetMode,
       p_target_page_id: targetPageId ?? null,
     })
-    if (error) throw new Error(`DatabaseRepo.convertLayout: ${error.message}`)
+    if (error) {
+      return { ok: false, error: { code: 'DB_ERROR', message: `DatabaseRepo.convertLayout: ${error.message}` } }
+    }
+    return { ok: true, value: undefined }
   }
 
-  async duplicate(id: string, newTitle?: string, copyRows = false): Promise<string> {
+  async duplicate(id: string, newTitle?: string, copyRows = false): Promise<Result<string, AppError>> {
     const { data, error } = await this.db.rpc('duplicate_database', {
       p_source_db_id: id,
       p_new_title: newTitle ?? null,
       p_copy_rows: copyRows,
     })
-    if (error) throw new Error(`DatabaseRepo.duplicate: ${error.message}`)
-    return data as string
+    if (error) {
+      return { ok: false, error: { code: 'DB_ERROR', message: `DatabaseRepo.duplicate: ${error.message}` } }
+    }
+    return { ok: true, value: data as string }
   }
 }
