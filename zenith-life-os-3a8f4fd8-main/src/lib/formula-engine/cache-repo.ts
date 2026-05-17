@@ -1,7 +1,8 @@
+import { logger } from '../logger';
 import { supabase } from '../supabase/client';
 
 export class CacheRepo {
-  public static async upsert(workspaceId: string, formulaId: string, rowId: string, value: any) {
+  public static async upsert(workspaceId: string, formulaId: string, rowId: string, value: unknown): Promise<void> {
     const { error } = await supabase
       .from('formula_cache')
       .upsert({
@@ -14,12 +15,12 @@ export class CacheRepo {
       }, { onConflict: 'formula_id, row_id' });
 
     if (error) {
-      console.error('Failed to upsert cache', error);
+      logger.error({ error, formulaId, rowId }, 'Failed to upsert formula cache');
       throw error;
     }
   }
 
-  public static async invalidate(formulaId: string, rowId?: string) {
+  public static async invalidate(formulaId: string, rowId?: string): Promise<void> {
     let query = supabase
       .from('formula_cache')
       .update({ is_stale: true })
@@ -30,6 +31,21 @@ export class CacheRepo {
     }
 
     const { error } = await query;
-    if (error) throw error;
+    if (error) {
+      logger.error({ error, formulaId }, 'Failed to invalidate formula cache');
+      throw error;
+    }
+  }
+
+  public static async get(formulaId: string, rowId: string): Promise<unknown | null> {
+    const { data, error } = await supabase
+      .from('formula_cache')
+      .select('value, is_stale')
+      .eq('formula_id', formulaId)
+      .eq('row_id', rowId)
+      .single();
+
+    if (error || !data || data.is_stale) return null;
+    return data.value;
   }
 }

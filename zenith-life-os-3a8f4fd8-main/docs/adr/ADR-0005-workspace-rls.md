@@ -1,22 +1,28 @@
-# ADR-0005: Workspace-Based RLS (not creator-based)
+# ADR-0005: Workspace-Scoped RLS
 
-**Status:** Accepted
-**Date:** 2026-05-17
+**Status:** Accepted  
+**Date:** 2026-05-17  
+**Decision-Makers:** Architecture Team
 
 ## Context
 
-Several early migrations used `auth.uid()::text` (creator-based) for RLS policies. This only allows the *creator* of a record to see it — breaking multi-member workspaces where teammates should see each other's data.
+Multi-tenant data isolation requires that every database query is scoped to the user's active workspace. Traditional `auth.uid()` based RLS is insufficient because a user may belong to multiple workspaces.
 
 ## Decision
 
-All RLS policies MUST use `workspace_id = public.current_workspace_id()` (workspace-based isolation). The workspace_id is set via `SET LOCAL app.current_workspace_id = '...'` on each server request.
+1. **RLS predicates use `current_workspace_id()`** not `auth.uid()`.
+2. **Session variable**: `app.current_workspace_id` is set via `SET LOCAL` at the start of each request.
+3. **Function**: `current_workspace_id()` reads from `current_setting('app.current_workspace_id', true)`.
+4. **Membership check**: All RLS policies verify workspace membership via `users_workspaces` junction table.
+5. **SECURITY DEFINER**: Critical functions (audit, idempotency) use `SECURITY DEFINER` with explicit workspace context.
 
-### Exceptions (documented with `-- ALLOW:` comment):
-- `vault_items`: Uses `owner_user_id + workspace_id` (personal items within a workspace)
-- System operations: Use `public.is_system_context()` for background jobs
+## Invariants
+
+- `I-002`: All RLS policies must reference `current_workspace_id()`, never `auth.uid()` directly.
+- `I-009`: All tables with user data must have a `workspace_id` column.
 
 ## Consequences
 
-- All team members in a workspace can view/edit shared data
-- Vault items remain personal (owner-only)
-- Creator-based policies are explicitly banned in CI
+- Every API request must set the workspace context before any queries
+- Cross-workspace queries are impossible by design
+- Workspace admin operations require elevated context

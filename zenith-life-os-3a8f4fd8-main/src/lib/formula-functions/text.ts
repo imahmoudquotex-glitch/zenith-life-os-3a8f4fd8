@@ -15,7 +15,7 @@ registerFunction({
   maxArgs: 1,
   argTypes: ['string'],
   returnType: 'number',
-  execute: (str: string) => str.length
+  execute: (str: string) => (typeof str === 'string' ? str.length : 0)
 });
 
 registerFunction({
@@ -24,7 +24,7 @@ registerFunction({
   maxArgs: 1,
   argTypes: ['string'],
   returnType: 'string',
-  execute: (str: string) => str.toUpperCase()
+  execute: (str: string) => (typeof str === 'string' ? str.toUpperCase() : '')
 });
 
 registerFunction({
@@ -33,7 +33,7 @@ registerFunction({
   maxArgs: 1,
   argTypes: ['string'],
   returnType: 'string',
-  execute: (str: string) => str.toLowerCase()
+  execute: (str: string) => (typeof str === 'string' ? str.toLowerCase() : '')
 });
 
 registerFunction({
@@ -51,7 +51,8 @@ registerFunction({
   maxArgs: 3,
   argTypes: ['string', 'string', 'string'],
   returnType: 'string',
-  execute: (str: string, search: string, replacement: string) => str.split(search).join(replacement) // split/join prevents regex dos
+  // split/join prevents regex DoS
+  execute: (str: string, search: string, replacement: string) => str.split(search).join(replacement)
 });
 
 registerFunction({
@@ -70,4 +71,82 @@ registerFunction({
   argTypes: ['string'],
   returnType: 'string',
   execute: (str: string) => str.trim()
+});
+
+registerFunction({
+  name: 'startsWith',
+  minArgs: 2,
+  maxArgs: 2,
+  argTypes: ['string', 'string'],
+  returnType: 'boolean',
+  execute: (str: string, prefix: string) => str.startsWith(prefix)
+});
+
+registerFunction({
+  name: 'endsWith',
+  minArgs: 2,
+  maxArgs: 2,
+  argTypes: ['string', 'string'],
+  returnType: 'boolean',
+  execute: (str: string, suffix: string) => str.endsWith(suffix)
+});
+
+registerFunction({
+  name: 'repeat',
+  minArgs: 2,
+  maxArgs: 2,
+  argTypes: ['string', 'number'],
+  returnType: 'string',
+  execute: (str: string, count: number) => {
+    if (count < 0 || count > 1000) return '';
+    return str.repeat(count);
+  }
+});
+
+registerFunction({
+  name: 'padStart',
+  minArgs: 2,
+  maxArgs: 3,
+  argTypes: ['string', 'number', 'string'],
+  returnType: 'string',
+  execute: (str: string, len: number, fill?: string) => str.padStart(len, fill || ' ')
+});
+
+registerFunction({
+  name: 'padEnd',
+  minArgs: 2,
+  maxArgs: 3,
+  argTypes: ['string', 'number', 'string'],
+  returnType: 'string',
+  execute: (str: string, len: number, fill?: string) => str.padEnd(len, fill || ' ')
+});
+
+registerFunction({
+  name: 'split',
+  minArgs: 2,
+  maxArgs: 2,
+  argTypes: ['string', 'string'],
+  returnType: 'array',
+  execute: (str: string, delimiter: string) => str.split(delimiter)
+});
+
+registerFunction({
+  name: 'format',
+  minArgs: 1,
+  maxArgs: 1,
+  argTypes: ['number'],
+  returnType: 'string',
+  execute: (num: number) => String(num)
+});
+
+registerFunction({
+  name: 'toNumber',
+  minArgs: 1,
+  maxArgs: 1,
+  argTypes: ['string'],
+  returnType: 'number',
+  execute: (str: string) => {
+    const n = Number(str);
+    return isNaN(n) ? 0 : n;
+  }
 });

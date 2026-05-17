@@ -107,13 +107,32 @@ export default {
     const nonce = generateNonce();
 
     try {
+      // ── Middleware Pipeline ──────────────────────────────────────────────
+
+      // 1. Rate limiting (auth endpoints get stricter limits)
+      const { checkRateLimit, AUTH_RATE_LIMIT, API_RATE_LIMIT } = await import("./middleware/rate-limiter");
+      const url = new URL(request.url);
+      const rateConfig = url.pathname.startsWith("/auth/") ? AUTH_RATE_LIMIT : API_RATE_LIMIT;
+      const rateLimited = checkRateLimit(request, rateConfig);
+      if (rateLimited) return withSecurityHeaders(rateLimited, nonce);
+
+      // 2. CSRF validation on mutations
+      const { validateCsrf, ensureCsrfCookie } = await import("./middleware/csrf");
+      const csrfError = validateCsrf(request);
+      if (csrfError) return withSecurityHeaders(csrfError, nonce);
+
+      // 3. Application handler
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       const normalized = await normalizeCatastrophicSsrResponse(response);
-      return withSecurityHeaders(normalized, nonce);
+
+      // 4. Ensure CSRF cookie + security headers
+      const withCsrf = ensureCsrfCookie(request, normalized);
+      return withSecurityHeaders(withCsrf, nonce);
     } catch (error) {
       logger.error({ error }, "server.ts: Root fetch catch block");
       return withSecurityHeaders(brandedErrorResponse(), nonce);
     }
   },
 };
+

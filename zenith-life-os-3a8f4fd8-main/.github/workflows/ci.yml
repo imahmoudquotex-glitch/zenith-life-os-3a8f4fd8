@@ -62,3 +62,7 @@ jobs:
 
       - name: "Gate: No localStorage secrets"
         run: pnpm tsx scripts/check-no-localstorage-secrets.ts
+
+      - name: "Gate: Formula function count >= 40"
+        run: pnpm tsx scripts/check-function-count.ts
+

@@ -6,7 +6,7 @@ registerFunction({
   maxArgs: 1,
   argTypes: ['number'],
   returnType: 'number',
-  execute: Math.abs
+  execute: (n: number) => Math.abs(n)
 });
 
 registerFunction({
@@ -15,7 +15,7 @@ registerFunction({
   maxArgs: 1,
   argTypes: ['number'],
   returnType: 'number',
-  execute: Math.ceil
+  execute: (n: number) => Math.ceil(n)
 });
 
 registerFunction({
@@ -24,16 +24,20 @@ registerFunction({
   maxArgs: 1,
   argTypes: ['number'],
   returnType: 'number',
-  execute: Math.floor
+  execute: (n: number) => Math.floor(n)
 });
 
 registerFunction({
   name: 'round',
   minArgs: 1,
-  maxArgs: 1,
-  argTypes: ['number'],
+  maxArgs: 2,
+  argTypes: ['number', 'number'],
   returnType: 'number',
-  execute: Math.round
+  execute: (n: number, decimals?: number) => {
+    if (decimals === undefined) return Math.round(n);
+    const factor = Math.pow(10, decimals);
+    return Math.round(n * factor) / factor;
+  }
 });
 
 registerFunction({
@@ -42,7 +46,7 @@ registerFunction({
   maxArgs: 999,
   argTypes: ['number'],
   returnType: 'number',
-  execute: Math.max
+  execute: (...args: number[]) => Math.max(...args)
 });
 
 registerFunction({
@@ -51,7 +55,7 @@ registerFunction({
   maxArgs: 999,
   argTypes: ['number'],
   returnType: 'number',
-  execute: Math.min
+  execute: (...args: number[]) => Math.min(...args)
 });
 
 registerFunction({
@@ -60,7 +64,7 @@ registerFunction({
   maxArgs: 2,
   argTypes: ['number', 'number'],
   returnType: 'number',
-  execute: Math.pow
+  execute: (base: number, exp: number) => Math.pow(base, exp)
 });
 
 registerFunction({
@@ -69,7 +73,7 @@ registerFunction({
   maxArgs: 1,
   argTypes: ['number'],
   returnType: 'number',
-  execute: Math.sqrt
+  execute: (n: number) => Math.sqrt(n)
 });
 
 registerFunction({
@@ -78,7 +82,7 @@ registerFunction({
   maxArgs: 1,
   argTypes: ['number'],
   returnType: 'number',
-  execute: Math.sign
+  execute: (n: number) => Math.sign(n)
 });
 
 registerFunction({
@@ -87,7 +91,25 @@ registerFunction({
   maxArgs: 1,
   argTypes: ['number'],
   returnType: 'number',
-  execute: Math.log
+  execute: (n: number) => Math.log(n)
+});
+
+registerFunction({
+  name: 'log10',
+  minArgs: 1,
+  maxArgs: 1,
+  argTypes: ['number'],
+  returnType: 'number',
+  execute: (n: number) => Math.log10(n)
+});
+
+registerFunction({
+  name: 'log2',
+  minArgs: 1,
+  maxArgs: 1,
+  argTypes: ['number'],
+  returnType: 'number',
+  execute: (n: number) => Math.log2(n)
 });
 
 registerFunction({
@@ -96,7 +118,7 @@ registerFunction({
   maxArgs: 1,
   argTypes: ['number'],
   returnType: 'number',
-  execute: Math.exp
+  execute: (n: number) => Math.exp(n)
 });
 
 registerFunction({
@@ -105,7 +127,10 @@ registerFunction({
   maxArgs: 2,
   argTypes: ['number', 'number'],
   returnType: 'number',
-  execute: (a, b) => a % b
+  execute: (a: number, b: number) => {
+    if (b === 0) return 0;
+    return a % b;
+  }
 });
 
 registerFunction({
@@ -115,4 +140,40 @@ registerFunction({
   argTypes: [],
   returnType: 'number',
   execute: () => Math.PI
+});
+
+registerFunction({
+  name: 'e',
+  minArgs: 0,
+  maxArgs: 0,
+  argTypes: [],
+  returnType: 'number',
+  execute: () => Math.E
+});
+
+registerFunction({
+  name: 'clamp',
+  minArgs: 3,
+  maxArgs: 3,
+  argTypes: ['number', 'number', 'number'],
+  returnType: 'number',
+  execute: (val: number, min: number, max: number) => Math.min(Math.max(val, min), max)
+});
+
+registerFunction({
+  name: 'trunc',
+  minArgs: 1,
+  maxArgs: 1,
+  argTypes: ['number'],
+  returnType: 'number',
+  execute: (n: number) => Math.trunc(n)
+});
+
+registerFunction({
+  name: 'cbrt',
+  minArgs: 1,
+  maxArgs: 1,
+  argTypes: ['number'],
+  returnType: 'number',
+  execute: (n: number) => Math.cbrt(n)
 });

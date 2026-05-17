@@ -1,47 +1,47 @@
-#!/usr/bin/env npx tsx
-// CI Gate: check-no-uuid-columns.ts
-// Scans ALL migrations for UUID PRIMARY KEY / UUID NOT NULL columns
-// Only auth_uid mapping is allowed as UUID (since Supabase auth uses UUIDs)
+/**
+ * CI Gate: check-no-uuid-columns.ts
+ * Scans migration files for UUID column types.
+ * All IDs must be TEXT with ULID validation per ADR-0004.
+ */
 
-import { readFileSync, readdirSync } from 'fs';
-import { join, relative } from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
-const MIGRATIONS_DIR = 'supabase/migrations';
-const UUID_PK_PATTERN = /UUID\s+(PRIMARY\s+KEY|NOT\s+NULL)/gi;
-const UUID_DEFAULT_PATTERN = /DEFAULT\s+gen_random_uuid\(\)/gi;
+const MIGRATIONS_DIR = path.resolve(__dirname, '..', 'supabase', 'migrations');
+const UUID_PATTERNS = [
+  /\bUUID\b/gi,
+  /\bgen_random_uuid\s*\(\)/gi,
+  /\buuid_generate_v4\s*\(\)/gi,
+];
 
-// Allowed exceptions
-const ALLOWED_FILES = ['0010_users.sql']; // auth_uid is UUID by design
-const ALLOWED_PATTERNS = [/auth_uid/i];
+// Exceptions: extensions migration is allowed to reference UUID extension
+const ALLOWED_FILES = ['0001_extensions.sql'];
 
-let violations = 0;
+const violations: string[] = [];
 
-const files = readdirSync(MIGRATIONS_DIR).filter(f => f.endsWith('.sql'));
+if (fs.existsSync(MIGRATIONS_DIR)) {
+  for (const file of fs.readdirSync(MIGRATIONS_DIR)) {
+    if (!file.endsWith('.sql')) continue;
+    if (ALLOWED_FILES.includes(file)) continue;
 
-for (const file of files) {
-  if (ALLOWED_FILES.includes(file)) continue;
-
-  const content = readFileSync(join(MIGRATIONS_DIR, file), 'utf-8');
-  const lines = content.split('\n');
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const isAllowed = ALLOWED_PATTERNS.some(p => p.test(line));
-    if (isAllowed) continue;
-
-    if (UUID_PK_PATTERN.test(line) || UUID_DEFAULT_PATTERN.test(line)) {
-      console.error(`❌ ${file}:${i + 1}: UUID column found — use TEXT with is_ulid() CHECK`);
-      violations++;
+    const content = fs.readFileSync(path.join(MIGRATIONS_DIR, file), 'utf-8');
+    
+    for (const pattern of UUID_PATTERNS) {
+      pattern.lastIndex = 0;
+      let match;
+      while ((match = pattern.exec(content)) !== null) {
+        const line = content.substring(0, match.index).split('\n').length;
+        violations.push(`${file}:${line}: ${match[0]}`);
+      }
     }
-    // Reset lastIndex for global regex
-    UUID_PK_PATTERN.lastIndex = 0;
-    UUID_DEFAULT_PATTERN.lastIndex = 0;
   }
 }
 
-if (violations > 0) {
-  console.error(`\n❌ ${violations} UUID column(s) found in migrations. Use TEXT + is_ulid().`);
+if (violations.length > 0) {
+  process.stderr.write('❌ SECURITY GATE FAILED: UUID columns detected in migrations\n');
+  process.stderr.write('   All IDs must be TEXT with ULID validation (ADR-0004)\n');
+  violations.forEach(v => process.stderr.write(`  ${v}\n`));
   process.exit(1);
 } else {
-  console.log('✅ No UUID columns in business table migrations.');
+  process.stderr.write('✅ No UUID column violations found\n');
 }
