@@ -1,1 +1,19 @@
-// Generated stub
+const REDACTED = '[REDACTED]';
+const SENSITIVE_KEYS = new Set([
+  'password', 'token', 'secret', 'key', 'authorization', 'cookie'
+]);
+
+export function redactSecrets(obj: any): any {
+  if (typeof obj !== 'object' || obj === null) return obj;
+  if (Array.isArray(obj)) return obj.map(redactSecrets);
+  
+  const result: any = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (SENSITIVE_KEYS.has(k.toLowerCase())) {
+      result[k] = REDACTED;
+    } else {
+      result[k] = redactSecrets(v);
+    }
+  }
+  return result;
+}

@@ -38,7 +38,9 @@ export async function runAIWithQuota<T>(
   // STEP 2: PII redaction — mandatory before any AI call
   const promptText = typeof args.prompt === 'string' ? args.prompt : JSON.stringify(args.prompt)
   assertNoVaultContent(promptText)
-  const { redacted: safePrompt, piiFound } = redactPII(promptText)
+  const { redacted: redactedPrompt, piiFound } = redactPII(promptText)
+  // Wrap in <user_input> tags to contain prompt injection (ADR-0004)
+  const safePrompt = `<user_input>${redactedPrompt}</user_input>`
 
   // STEP 3: Reserve quota atomically
   let reservation: Awaited<ReturnType<typeof reserveAIQuota>> | null = null
@@ -91,7 +93,15 @@ export async function runAIWithQuota<T>(
       systemClock.nowMs() - startMs,
     )
 
-    const parsed = args.parseResult ? args.parseResult(result.content) : (result.content as unknown as T)
+    // STEP 5b: Zod schema parse (structured output) or custom parser
+    let parsed: T
+    if (args.schema) {
+      parsed = args.schema.parse(JSON.parse(result.content)) as T
+    } else if (args.parseResult) {
+      parsed = args.parseResult(result.content)
+    } else {
+      parsed = result.content as unknown as T
+    }
 
     return {
       ok: true,

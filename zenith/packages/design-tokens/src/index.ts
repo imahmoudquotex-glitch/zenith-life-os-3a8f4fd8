@@ -2,40 +2,56 @@
  * @zenith/design-tokens — Dark-only design token system.
  * ADR-0010: Dark mode ONLY. No light theme tokens.
  * check:dark-only-tokens enforces this in CI.
+ *
+ * Canonical hex values from Phase 00 invariants:
+ *   bgCanvas:      #0a0a0a  (--bg-canvas)
+ *   bgSurface:     #131313  (--bg-surface)
+ *   bgElevated:    #1c1c1c  (--bg-elevated)
+ *   textPrimary:   #fafafa  (--text-primary)
+ *   textSecondary: #a3a3a3  (--text-secondary)
+ *   accentNeon:    #4ade80  (--accent-neon)
+ *   accentDanger:  #ef4444  (--accent-danger)
  */
 
-// Color palette — HSL dark tokens only
+// ─── Colors (Phase 00 canonical values) ───────────────────────────────────────
 export const colors = {
   // Background layers
-  bgBase:      'hsl(222 20% 8%)',
-  bgElevated:  'hsl(222 18% 11%)',
-  bgOverlay:   'hsl(222 16% 14%)',
-  bgSurface:   'hsl(222 14% 17%)',
+  bgCanvas:   '#0a0a0a',
+  bgSurface:  '#131313',
+  bgElevated: '#1c1c1c',
+  bgOverlay:  '#242424',
 
   // Text
-  textPrimary:   'hsl(222 10% 95%)',
-  textSecondary: 'hsl(222 8% 65%)',
-  textMuted:     'hsl(222 6% 45%)',
-  textDisabled:  'hsl(222 4% 30%)',
+  textPrimary:   '#fafafa',
+  textSecondary: '#a3a3a3',
+  textMuted:     '#6b7280',
+  textDisabled:  '#404040',
 
-  // Brand
-  brandPrimary:  'hsl(265 80% 65%)',
-  brandSecondary:'hsl(215 75% 60%)',
-  brandAccent:   'hsl(180 70% 55%)',
-
-  // Semantic
-  success: 'hsl(145 65% 42%)',
-  warning: 'hsl(38 90% 55%)',
-  error:   'hsl(0 75% 55%)',
-  info:    'hsl(215 80% 55%)',
+  // Accent — neon green is the primary brand accent
+  accentNeon:    '#4ade80',
+  accentBlue:    '#60a5fa',
+  accentPurple:  '#a78bfa',
+  accentDanger:  '#ef4444',
+  accentWarning: '#f59e0b',
+  accentInfo:    '#38bdf8',
 
   // Borders
-  borderDefault: 'hsl(222 12% 20%)',
-  borderStrong:  'hsl(222 12% 28%)',
-  borderFocus:   'hsl(265 80% 65%)',
+  borderDefault: '#262626',
+  borderStrong:  '#3f3f3f',
+  borderFocus:   '#4ade80',
+
+  // Legacy aliases (kept for backwards compat with existing packages)
+  /** @deprecated use bgCanvas */ bgBase: '#0a0a0a',
+  /** @deprecated use accentPurple */ brandPrimary: '#a78bfa',
+  /** @deprecated use accentBlue */ brandSecondary: '#60a5fa',
+  /** @deprecated use accentNeon */ brandAccent: '#4ade80',
+  /** @deprecated use accentDanger */ error: '#ef4444',
+  /** @deprecated use accentWarning */ warning: '#f59e0b',
+  /** @deprecated use accentNeon */ success: '#4ade80',
+  /** @deprecated use accentInfo */ info: '#38bdf8',
 } as const
 
-// Spacing scale (4px base)
+// ─── Spacing scale (4px base) ─────────────────────────────────────────────────
 export const spacing = {
   '0':  '0px',
   '1':  '4px',
@@ -52,9 +68,9 @@ export const spacing = {
   '24': '96px',
 } as const
 
-// Typography
+// ─── Typography ───────────────────────────────────────────────────────────────
 export const typography = {
-  fontFamily: "'Inter', 'Cairo', system-ui, sans-serif",
+  fontFamily:     "'Inter', 'Cairo', system-ui, sans-serif",
   fontFamilyMono: "'JetBrains Mono', 'Fira Code', monospace",
   fontSizes: {
     xs:   '11px',
@@ -62,26 +78,45 @@ export const typography = {
     base: '15px',
     lg:   '17px',
     xl:   '20px',
-    '2xl':'24px',
-    '3xl':'30px',
-    '4xl':'36px',
+    '2xl': '24px',
+    '3xl': '30px',
+    '4xl': '36px',
   },
-  lineHeights: { tight: '1.25', normal: '1.5', relaxed: '1.75' },
-  fontWeights: { normal: '400', medium: '500', semibold: '600', bold: '700' },
+  lineHeights:  { tight: '1.25', normal: '1.5', relaxed: '1.75' },
+  fontWeights:  { normal: '400', medium: '500', semibold: '600', bold: '700' },
 } as const
 
-// Radii
+// ─── Radii ────────────────────────────────────────────────────────────────────
 export const radii = {
   sm: '4px', md: '8px', lg: '12px', xl: '16px', full: '9999px',
 } as const
 
-// Shadows (dark-optimized)
+// ─── Shadows (dark-optimised) ─────────────────────────────────────────────────
 export const shadows = {
-  sm: '0 1px 3px hsl(222 30% 4% / 0.4)',
-  md: '0 4px 12px hsl(222 30% 4% / 0.5)',
-  lg: '0 8px 24px hsl(222 30% 4% / 0.6)',
-  xl: '0 16px 48px hsl(222 30% 4% / 0.7)',
+  sm: '0 1px 3px rgba(0,0,0,.5)',
+  md: '0 4px 12px rgba(0,0,0,.6)',
+  lg: '0 8px 24px rgba(0,0,0,.7)',
+  xl: '0 16px 48px rgba(0,0,0,.8)',
 } as const
 
+// ─── Motion (Phase 00: max 200ms) ─────────────────────────────────────────────
+export const motion = {
+  fast:   '100ms ease',
+  normal: '150ms ease',
+  slow:   '200ms ease',
+} as const
+
+// ─── Z-index ──────────────────────────────────────────────────────────────────
+export const zIndex = {
+  base:    0,
+  overlay: 100,
+  modal:   200,
+  tooltip: 300,
+  toast:   400,
+} as const
+
+// ─── Type exports ─────────────────────────────────────────────────────────────
 export type ColorToken   = keyof typeof colors
 export type SpacingToken = keyof typeof spacing
+export type RadiiToken   = keyof typeof radii
+export type ShadowToken  = keyof typeof shadows

@@ -1,21 +1,17 @@
-export abstract class BaseRepo<TEntity> {
-  protected abstract table: string;
-  constructor(protected readonly db: any) {}
+import { PoolClient } from 'pg';
+import { InternalError } from '@app/result';
+import { logger } from '@app/shared/logger';
 
-  async findById(id: string, workspaceId: string): Promise<TEntity | null> {
-    return this.db.oneOrNone(
-      `SELECT * FROM ${this.table}
-       WHERE id = $1 AND workspace_id = $2 AND is_deleted = false`,
-      [id, workspaceId],
-    );
-  }
+export abstract class BaseRepo {
+  constructor(protected readonly client: PoolClient) {}
 
-  async softDelete(id: string, workspaceId: string, actorId: string) {
-    return this.db.none(
-      `UPDATE ${this.table}
-       SET is_deleted = true, deleted_at = now(), last_edited_by_user_id = $3
-       WHERE id = $1 AND workspace_id = $2`,
-      [id, workspaceId, actorId],
-    );
+  protected async query<T>(sql: string, params: unknown[] = []): Promise<T[]> {
+    try {
+      const result = await this.client.query(sql, params);
+      return result.rows;
+    } catch (err) {
+      logger.error({ err, sql }, 'db.query.failed');
+      throw new InternalError();
+    }
   }
 }

@@ -1,0 +1,30 @@
+version: 2
+
+updates:
+  # npm/pnpm — monorepo root
+  - package-ecosystem: "npm"
+    directory: "/zenith"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 10
+    groups:
+      # Group patch/minor for non-critical packages
+      non-critical-updates:
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Don't auto-bump major versions
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    open-pull-requests-limit: 5

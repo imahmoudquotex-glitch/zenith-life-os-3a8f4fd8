@@ -8,10 +8,13 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 const EXEMPT_TABLES = new Set([
-  'workspaces',         // root entity — IS the workspace
-  'users',              // root entity — linked to workspaces via junction
-  'feature_flags',      // global, not per-workspace (read-only for app_user)
-  'webhook_nonces',     // service-role only
+  'workspaces',                // root entity — IS the workspace
+  'users',                     // root entity — linked to workspaces via junction
+  'feature_flags',             // global, not per-workspace (read-only for app_user)
+  'webhook_nonces',            // service-role only
+  'product_success_metrics',   // global KPI table — not per-workspace
+  'idempotency_keys',          // service-level, workspace-scoped via column but no FK needed
+  'rate_limit_buckets',        // service-level rate limiting
 ])
 
 const VIOLATIONS: string[] = []

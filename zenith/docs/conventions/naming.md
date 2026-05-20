@@ -22,6 +22,9 @@
 | JSON | `metadata_json JSONB` | Suffixed `*_json` |
 | Timestamps | `created_at TIMESTAMPTZ` | Always UTC, `created_at` + `updated_at` |
 | Soft delete | `is_deleted BOOLEAN`, `deleted_at TIMESTAMPTZ` | Both required |
+| Encryption | `wrapped_iek BYTEA`, `nonce BYTEA`, `aead_tag BYTEA` | Also `kdf_params JSONB`, `encryption_algo TEXT`, `key_version INT` |
+| Donations | `amount_cents BIGINT`, `currency CHAR(3)` | Also `provider TEXT`, `provider_tx_id TEXT`, `anonymous BOOLEAN` |
+| Compliance | `consent_kind TEXT`, `data_region CHAR(8)` | Also `data_residency_locked BOOLEAN` |
 
 ### Indexes
 - `idx_<table>_<column(s)>` — e.g., `idx_workspaces_slug`

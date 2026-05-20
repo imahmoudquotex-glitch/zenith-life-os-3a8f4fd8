@@ -45,6 +45,9 @@ export const ErrorRegistry = {
   SYS_002: { message: 'Service unavailable', httpStatus: 503, retry: true },
   SYS_003: { message: 'Rate limit exceeded', httpStatus: 429, retry: true },
   SYS_004: { message: 'Invalid request', httpStatus: 400, retry: false },
+  SYS_005: { message: 'Idempotency key required', httpStatus: 400, retry: false },
+  SYS_006: { message: 'Idempotency key mismatch', httpStatus: 409, retry: false },
+  SYS_007: { message: 'Billing quota exceeded', httpStatus: 402, retry: false },
 
   // ─── MVP Gate ───────────────────────────────────────
   MVP_001: { message: 'Feature outside MVP scope', httpStatus: 501, retry: false },

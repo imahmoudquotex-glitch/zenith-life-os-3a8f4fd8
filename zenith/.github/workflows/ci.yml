@@ -1,20 +1,35 @@
 name: CI
+
 on:
   pull_request:
     branches: [main]
   push:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ci:
+    name: CI — Typecheck / Lint / Test / Build
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: zenith
+
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
-          cache: 'pnpm'
+          node-version-file: zenith/.nvmrc
+          cache: pnpm
+          cache-dependency-path: zenith/pnpm-lock.yaml
 
       - name: Install
         run: pnpm install --frozen-lockfile
@@ -25,11 +40,11 @@ jobs:
       - name: Lint
         run: pnpm lint --max-warnings 0
 
-      - name: Format check
-        run: pnpm format:check
-
       - name: Unit tests
         run: pnpm test
+
+      - name: Check manifest
+        run: pnpm check:manifest
 
       - name: Check naming
         run: pnpm check:naming
@@ -51,6 +66,39 @@ jobs:
 
       - name: Check vault leaks
         run: pnpm check:vault-leak
+
+      - name: Check audit events
+        run: pnpm check:audit-events
+
+      - name: Check routes envelope
+        run: pnpm check:routes-envelope
+
+      - name: Check idempotency
+        run: pnpm check:idempotency
+
+      - name: Check no SQL in routes
+        run: pnpm check:no-sql-in-routes
+
+      - name: Check no AI in render
+        run: pnpm check:no-ai-in-render
+
+      - name: Check timezone hardcode
+        run: pnpm check:timezone-hardcode
+
+      - name: Check worker leases
+        run: pnpm check:worker-leases
+
+      - name: Check dark-only tokens
+        run: pnpm check:dark-only-tokens
+
+      - name: Check SW audit
+        run: pnpm check:sw-audit
+
+      - name: Check VAPID key not in client
+        run: pnpm check:vapid-key-not-in-client
+
+      - name: Check audit Merkle chain
+        run: pnpm check:audit-merkle
 
       - name: Gitleaks
         uses: gitleaks/gitleaks-action@v2

@@ -1,1 +1,2 @@
-// Export entry point
+export * from './base-service';
+export * from './tenant-service';

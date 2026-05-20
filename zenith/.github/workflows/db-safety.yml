@@ -1,0 +1,40 @@
+name: DB Safety Workflow
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  db-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      
+      - run: pnpm install --frozen-lockfile
+
+      - name: Start Postgres
+        run: docker compose up -d db
+        env:
+          POSTGRES_PASSWORD: test
+          
+      - name: Apply migrations safely (Idempotency proof)
+        run: |
+          for f in packages/db/migrations/*.sql; do
+            psql postgresql://postgres:test@localhost:5432/postgres -f "$f"
+            psql postgresql://postgres:test@localhost:5432/postgres -f "$f"
+          done
+          
+      - name: Downtime check (no destructive DDL without ADR)
+        run: pnpm tsx scripts/check-destructive-ddl.ts
+        
+      - name: Tenant boundary fuzzer
+        run: pnpm tsx scripts/fuzz-tenant-boundaries.ts --iterations=1000
