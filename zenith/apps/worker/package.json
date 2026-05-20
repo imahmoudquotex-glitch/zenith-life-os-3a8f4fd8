@@ -1,0 +1,25 @@
+{
+  "name": "@zenith/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Zenith background job worker — lease-based, Postgres-backed",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "test": "node --experimental-vm-modules ../../node_modules/.bin/jest --passWithNoTests"
+  },
+  "dependencies": {
+    "@zenith/shared": "workspace:*",
+    "@zenith/db": "workspace:*",
+    "@zenith/audit": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "tsx": "^4.19.0",
+    "@types/node": "^25.8.0"
+  }
+}
