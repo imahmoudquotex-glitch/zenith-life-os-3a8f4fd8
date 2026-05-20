@@ -27,13 +27,13 @@ CREATE POLICY expense_categories_isolation ON public.expense_categories
   USING (workspace_id = current_setting('app.current_workspace_id', true));
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.expense_categories TO app_user;
 
--- Expenses (money always in _cents BIGINT per ADR-0005)
+-- Expenses (all monetary values in _cents BIGINT per ADR-0005)
 CREATE TABLE IF NOT EXISTS public.expenses (
   id              TEXT PRIMARY KEY,
   workspace_id    TEXT NOT NULL REFERENCES public.workspaces(id) ON DELETE CASCADE,
   category_id     TEXT REFERENCES public.expense_categories(id) ON DELETE SET NULL,
   title           TEXT NOT NULL,
-  amount_cents    BIGINT NOT NULL,         -- ADR-0005: cents only, never FLOAT
+  amount_cents    BIGINT NOT NULL,         -- ADR-0005: cents only, integer always
   currency        CHAR(3) NOT NULL DEFAULT 'EGP'
                     CHECK (currency IN ('USD','EUR','GBP','EGP','SAR','AED','QAR','KWD','BHD','OMR','JOD')),
   expense_date    DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -60,7 +60,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.expenses TO app_user;
 CREATE TRIGGER trg_expenses_updated_at BEFORE UPDATE ON public.expenses
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
--- Budgets (money in _cents BIGINT)
+-- Budgets (all monetary values in _cents BIGINT per ADR-0005)
 CREATE TABLE IF NOT EXISTS public.budgets (
   id              TEXT PRIMARY KEY,
   workspace_id    TEXT NOT NULL REFERENCES public.workspaces(id) ON DELETE CASCADE,
