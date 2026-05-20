@@ -76,7 +76,7 @@ function run(): void {
       'i',
     )
     const policyPattern = new RegExp(
-      `CREATE POLICY\\s+\\w+\\s+ON\\s+(?:public\\.)?${tableName}`,
+      `CREATE POLICY\\s+["']?\\w+["']?\\s+ON\\s+(?:public\\.)?${tableName}`,
       'i',
     )
 

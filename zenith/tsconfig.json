@@ -34,6 +34,14 @@
       "@zenith/flags/*": ["./packages/flags/src/*"],
       "@zenith/i18n/*": ["./packages/i18n/src/*"],
       "@zenith/db/*": ["./packages/db/src/*"],
+      "@app/result": ["./packages/result/src/index.ts"],
+      "@app/result/*": ["./packages/result/src/*"],
+      "@app/shared/*": ["./packages/shared/src/*"],
+      "@app/shared": ["./packages/shared/src/index.ts"],
+      "@app/repo": ["./packages/repo/src/index.ts"],
+      "@app/repo/*": ["./packages/repo/src/*"],
+      "@app/auth-guard": ["./packages/auth-guard/src/index.ts"],
+      "@app/auth-guard/*": ["./packages/auth-guard/src/*"],
       "@/*": ["./apps/web/src/*"]
     }
   },

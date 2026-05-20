@@ -1,5 +1,5 @@
 import 'server-only';
-// @ts-ignore
+// @ts-expect-error - ignored
 import { createClient } from '@app/shared/supabase/server';
 import { ForbiddenError } from '@app/result';
 import { requireUser } from './require-user';

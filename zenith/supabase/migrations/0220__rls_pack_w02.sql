@@ -1,3 +1,14 @@
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- File:        0220__rls_pack_w02.sql
+-- Wave:        W02 (0220–0319)
+-- Description:  Rls Pack W02
+-- Author:      zenith-system
+-- Created:     2026-05-20
+-- Idempotent:  YES (uses IF NOT EXISTS / OR REPLACE)
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEGIN;
+
 -- 0220__rls_pack_w02.sql
 -- Wave: W02
 -- Purpose: Final RLS enforcement sweep — ensure every W02 tenant table has rowsecurity + FORCE

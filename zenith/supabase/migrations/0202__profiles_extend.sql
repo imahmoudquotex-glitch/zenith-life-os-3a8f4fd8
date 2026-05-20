@@ -1,3 +1,14 @@
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- File:        0202__profiles_extend.sql
+-- Wave:        W02 (0202–0301)
+-- Description:  Profiles Extend
+-- Author:      zenith-system
+-- Created:     2026-05-20
+-- Idempotent:  YES (uses IF NOT EXISTS / OR REPLACE)
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEGIN;
+
 -- 0202__profiles_extend.sql
 -- Wave: W02
 -- Purpose: Extend users table with plan, daily review streak, and timezone fields

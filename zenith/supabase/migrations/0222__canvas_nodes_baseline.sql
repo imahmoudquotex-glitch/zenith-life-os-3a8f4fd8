@@ -1,3 +1,14 @@
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- File:        0222__canvas_nodes_baseline.sql
+-- Wave:        W02 (0222–0321)
+-- Description:  Canvas Nodes Baseline
+-- Author:      zenith-system
+-- Created:     2026-05-20
+-- Idempotent:  YES (uses IF NOT EXISTS / OR REPLACE)
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEGIN;
+
 -- 0222__canvas_nodes_baseline.sql
 -- Wave: W02
 -- Purpose: Canvas nodes baseline — rendering/edges/interaction deferred to later wave

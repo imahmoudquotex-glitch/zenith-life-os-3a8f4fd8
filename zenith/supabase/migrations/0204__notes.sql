@@ -1,3 +1,14 @@
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- File:        0204__notes.sql
+-- Wave:        W02 (0204–0303)
+-- Description:  Notes
+-- Author:      zenith-system
+-- Created:     2026-05-20
+-- Idempotent:  YES (uses IF NOT EXISTS / OR REPLACE)
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEGIN;
+
 -- 0204__notes.sql
 -- Wave: W02
 -- Purpose: Notes + version history tables with full-text search and RLS isolation

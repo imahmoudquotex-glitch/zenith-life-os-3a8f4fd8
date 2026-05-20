@@ -23,13 +23,16 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 9
 
       - uses: actions/setup-node@v4
         with:
-          node-version-file: zenith/.nvmrc
+          node-version: 20
           cache: pnpm
           cache-dependency-path: zenith/pnpm-lock.yaml
+
+      - name: Check forbidden lockfiles
+        run: tsx scripts/check-lockfiles.ts
 
       - name: Install
         run: pnpm install --frozen-lockfile
@@ -43,6 +46,7 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
+      # ── Schema & DB ────────────────────────────────────────────────────────
       - name: Check manifest
         run: pnpm check:manifest
 
@@ -55,18 +59,32 @@ jobs:
       - name: Check RLS
         run: pnpm check:rls
 
-      - name: Check crypto primitives
-        run: pnpm check:crypto
-
-      - name: Check tenant boundaries
-        run: pnpm check:tenants
-
       - name: Check money columns
         run: pnpm check:money
+
+      # ── Security ───────────────────────────────────────────────────────────
+      - name: Check crypto primitives
+        run: pnpm check:crypto
 
       - name: Check vault leaks
         run: pnpm check:vault-leak
 
+      - name: Check tenant boundaries
+        run: pnpm check:tenants
+
+      # W03: Service Worker must cover all sensitive routes
+      - name: Check SW audit deny-list
+        run: pnpm check:sw-audit
+
+      # W03: VAPID private key must never appear in client bundle
+      - name: Check VAPID key not in client
+        run: pnpm check:vapid-key-not-in-client
+
+      # W03: Audit chain Merkle integrity
+      - name: Check audit chain merkle
+        run: pnpm check:audit-merkle
+
+      # ── API Contracts ──────────────────────────────────────────────────────
       - name: Check audit events
         run: pnpm check:audit-events
 
@@ -82,6 +100,7 @@ jobs:
       - name: Check no AI in render
         run: pnpm check:no-ai-in-render
 
+      # ── Code Quality ───────────────────────────────────────────────────────
       - name: Check timezone hardcode
         run: pnpm check:timezone-hardcode
 
@@ -91,19 +110,12 @@ jobs:
       - name: Check dark-only tokens
         run: pnpm check:dark-only-tokens
 
-      - name: Check SW audit
-        run: pnpm check:sw-audit
-
-      - name: Check VAPID key not in client
-        run: pnpm check:vapid-key-not-in-client
-
-      - name: Check audit Merkle chain
-        run: pnpm check:audit-merkle
-
+      # ── Secret Scanning ────────────────────────────────────────────────────
       - name: Gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # ── Build ──────────────────────────────────────────────────────────────
       - name: Build
         run: pnpm build

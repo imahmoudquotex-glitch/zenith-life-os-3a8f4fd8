@@ -1,3 +1,14 @@
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- File:        0207__calendar_events.sql
+-- Wave:        W02 (0207–0306)
+-- Description:  Calendar Events
+-- Author:      zenith-system
+-- Created:     2026-05-20
+-- Idempotent:  YES (uses IF NOT EXISTS / OR REPLACE)
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEGIN;
+
 -- 0207__calendar_events.sql
 -- Wave: W02
 -- Purpose: Calendar events with timezone support, recurrence rules, and RLS isolation

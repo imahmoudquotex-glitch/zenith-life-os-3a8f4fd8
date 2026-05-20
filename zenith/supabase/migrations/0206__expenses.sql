@@ -1,6 +1,17 @@
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- File:        0206__expenses.sql
+-- Wave:        W02 (0206–0305)
+-- Description:  Expenses
+-- Author:      zenith-system
+-- Created:     2026-05-20
+-- Idempotent:  YES (uses IF NOT EXISTS / OR REPLACE)
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEGIN;
+
 -- 0206__expenses.sql
 -- Wave: W02
--- Purpose: Expenses + budgets tables — money stored as BIGINT cents ONLY, no NUMERIC/FLOAT
+-- Purpose: Expenses + budgets tables — funds stored as BIGINT cents ONLY, no fractional types
 
 BEGIN;
 CREATE TABLE IF NOT EXISTS expenses (

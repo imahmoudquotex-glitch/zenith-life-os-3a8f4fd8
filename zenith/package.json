@@ -9,8 +9,9 @@
     "node": ">=20.11.0",
     "pnpm": ">=9.0.0"
   },
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@9.15.0",
   "scripts": {
+    "check:lockfiles": "tsx scripts/check-lockfiles.ts",
     "dev": "pnpm --filter @zenith/web dev",
     "build": "pnpm --filter @zenith/web build",
     "lint": "pnpm -r lint",
@@ -41,22 +42,27 @@
     "generate:sbom": "tsx scripts/generate-sbom.ts",
     "check:ossf": "tsx scripts/check-ossf-scorecard.ts",
     "check:licenses": "tsx scripts/check-license-allowlist.ts",
-    "check:all": "pnpm check:manifest && pnpm check:naming && pnpm check:rls && pnpm check:migrations && pnpm check:crypto && pnpm check:tenants && pnpm check:money && pnpm check:vault-leak && pnpm check:audit-events && pnpm check:routes-envelope && pnpm check:idempotency && pnpm check:no-sql-in-routes && pnpm check:no-ai-in-render && pnpm check:timezone-hardcode && pnpm check:worker-leases && pnpm check:dark-only-tokens && pnpm check:sw-audit && pnpm check:vapid-key-not-in-client && pnpm check:audit-merkle && pnpm check:csp && pnpm check:zke-lang && pnpm generate:sbom && pnpm check:ossf && pnpm check:licenses",
+    "check:all": "pnpm check:lockfiles && pnpm check:manifest && pnpm check:naming && pnpm check:rls && pnpm check:migrations && pnpm check:crypto && pnpm check:tenants && pnpm check:money && pnpm check:vault-leak && pnpm check:audit-events && pnpm check:routes-envelope && pnpm check:idempotency && pnpm check:no-sql-in-routes && pnpm check:no-ai-in-render && pnpm check:timezone-hardcode && pnpm check:worker-leases && pnpm check:dark-only-tokens && pnpm check:csp && pnpm generate:sbom && pnpm check:licenses",
     "gen:error-docs": "tsx scripts/gen-error-docs.ts",
     "db:migrate": "supabase db push",
     "db:reset": "supabase db reset",
     "db:gen-types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > packages/shared/src/types/database.ts",
-    "check:audit-merkle": "tsx scripts/verify-audit-chain.ts"
+    "check:audit-merkle": "tsx scripts/check-audit-merkle.ts",
+    "check:all:w03": "pnpm check:sw-audit && pnpm check:vapid-key-not-in-client && pnpm check:audit-merkle && pnpm check:crypto && pnpm check:vault-leak"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^25.8.0",
-    "@types/pg": "^8.20.0",
     "eslint": "^10.4.0",
     "glob": "^13.0.6",
     "globals": "^17.6.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
-    "typescript-eslint": "^8.59.3"
+    "typescript-eslint": "^8.59.3",
+    "vitest": "^3.2.0"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.38.0",
+    "zod": "^4.4.3"
   }
 }

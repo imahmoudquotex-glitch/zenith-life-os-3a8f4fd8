@@ -1,18 +1,23 @@
-import { type Clock, systemClock } from '@zenith/shared/time';
+// packages/offline/src/backoff.ts
+// Wave: W03 — Exponential backoff with ±20% jitter for outbox sync retries
 
-function cryptoRandom(): number {
-  // Cryptographically secure random float in [0, 1)
-  const buf = new Uint32Array(1);
-  crypto.getRandomValues(buf);
-  return (buf[0]! >>> 0) / 0x1_0000_0000;
+const MAX_DELAY_MS = 30 * 60 * 1000; // 30 minutes cap
+
+/**
+ * Calculate next attempt timestamp with exponential backoff + jitter.
+ * attempts=1 → ~2s, attempts=3 → ~8s, attempts=5 → ~32s, attempts=8 → 30min (capped)
+ */
+export function calcNextAttempt(attempts: number, now = Date.now()): number {
+  const base = Math.min(Math.pow(2, attempts) * 1000, MAX_DELAY_MS);
+  // ±20% jitter to avoid thundering herd (using crypto to pass strict CI checks)
+  const randomFraction = globalThis.crypto.getRandomValues(new Uint32Array(1))[0]! / 0xffffffff;
+  const jitter = base * (0.8 + randomFraction * 0.4);
+  return now + Math.floor(jitter);
 }
 
-export function calcNextAttempt(
-  attempts: number,
-  clock: Clock = systemClock,
-): number {
-  // exponential with jitter ±20%, max 30 mins
-  const base = Math.min(Math.pow(2, attempts) * 1000, 30 * 60 * 1000);
-  const jitter = base * (0.8 + cryptoRandom() * 0.4);
-  return clock.nowMs() + jitter;
+/**
+ * Check if this attempt is final (becomes dead-letter).
+ */
+export function isDead(attempts: number, maxAttempts = 8): boolean {
+  return attempts >= maxAttempts;
 }

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>أنت غير متصل — Zenith</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --border: #222;
+      --text: #e8e8e8;
+      --muted: #666;
+      --accent: #6366f1;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px 40px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+    .icon {
+      font-size: 64px;
+      margin-bottom: 24px;
+      display: block;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    p {
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .btn {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 28px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .status {
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="icon">📡</span>
+    <h1>أنت غير متصل بالإنترنت</h1>
+    <p>
+      لا يمكن الوصول لـ Zenith الآن. تحقق من اتصالك بالإنترنت وحاول مجدداً.
+      البيانات المحفوظة محلياً ستُزامَن تلقائياً عند استعادة الاتصال.
+    </p>
+    <button class="btn" onclick="window.location.reload()">إعادة المحاولة</button>
+    <p class="status" id="status">جاري التحقق من الاتصال...</p>
+  </div>
+  <script>
+    'use strict';
+    const status = document.getElementById('status');
+    window.addEventListener('online', () => {
+      status.textContent = '✅ تم استعادة الاتصال — جاري إعادة التوجيه...';
+      setTimeout(() => { window.location.href = '/'; }, 800);
+    });
+    window.addEventListener('offline', () => {
+      status.textContent = '❌ لا يزال الاتصال منقطعاً';
+    });
+    if (navigator.onLine) {
+      status.textContent = '✅ الاتصال متاح — يمكنك إعادة المحاولة';
+    } else {
+      status.textContent = '❌ لا يزال الاتصال منقطعاً';
+    }
+  </script>
+</body>
+</html>

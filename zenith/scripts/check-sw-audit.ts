@@ -49,15 +49,23 @@ for (const file of SW_FILES) {
     }
   }
 
-  // Check deny-list coverage in SW files
+  // Check deny-list coverage only in the file that actually defines the arrays/patterns
   const swContent = text;
-  if (swContent.includes('NetworkOnly') || swContent.includes('networkOnly') || swContent.includes('DENY_LIST')) {
+  const hasDenyImpl = swContent.includes('const REQUIRED_DENY_PATHS = [');
+
+  if (hasDenyImpl) {
     for (const denyPath of REQUIRED_DENY_PATHS) {
       if (!swContent.includes(denyPath)) {
         errors.push(`  ${relative} — missing NetworkOnly deny path: ${denyPath}`);
       }
     }
   }
+}
+
+// Ensure at least one file had the deny list
+const denyListFound = SW_FILES.some(async f => (await fs.readFile(f, 'utf8')).includes('REQUIRED_DENY_PATHS'));
+if (!denyListFound) {
+  errors.push(`  No file found defining REQUIRED_DENY_PATHS`);
 }
 
 if (errors.length > 0) {

@@ -2,8 +2,8 @@ import 'server-only';
 
 /** PII patterns to redact from logs and audit metadata */
 const PII_PATTERNS: Array<{ name: string; pattern: RegExp; replace: string }> = [
-  { name: 'email', pattern: /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g, replace: '[email]' },
-  { name: 'phone', pattern: /(\+?[0-9]{1,4}[\s\-]?)?(\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{4})/g, replace: '[phone]' },
+  { name: 'email', pattern: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, replace: '[email]' },
+  { name: 'phone', pattern: /(\+?[0-9]{1,4}[\s-]?)?(\(?\d{3}\)?[\s-]?\d{3}[\s-]?\d{4})/g, replace: '[phone]' },
   { name: 'ip_v4', pattern: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g, replace: '[ip]' },
 ];
 

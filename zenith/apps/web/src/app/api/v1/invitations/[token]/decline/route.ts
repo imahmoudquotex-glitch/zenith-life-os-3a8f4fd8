@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { withEnvelope, withIdempotency } from '@/lib/api-route';
 
 export const POST = withEnvelope(async (_req, _ctx) => {

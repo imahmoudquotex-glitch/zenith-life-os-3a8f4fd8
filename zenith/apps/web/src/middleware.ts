@@ -1,106 +1,109 @@
-import 'server-only';
-import { NextResponse, type NextRequest } from 'next/server';
-import crypto from 'node:crypto';
+import { NextRequest, NextResponse } from 'next/server';
 
-// ─── Mutation methods that require CSRF protection ───────────────────────────
-const MUTATION_METHODS = new Set(['POST', 'PATCH', 'PUT', 'DELETE']);
+/**
+ * Zenith Security Middleware — Wave 03
+ *
+ * Applies on every navigation + page request:
+ * - Content-Security-Policy (strict, no unsafe-inline, nonce-based)
+ * - HSTS (2 years + preload)
+ * - X-Frame-Options + frame-ancestors (double enforcement)
+ * - Referrer-Policy
+ * - Permissions-Policy
+ * - COOP / COEP / CORP
+ * - x-csp-nonce (for server components to read via headers())
+ */
+export function middleware(request: NextRequest) {
+  const nonce = btoa(crypto.randomUUID());
 
-// ─── Routes exempt from CSRF (webhook inbound — use HMAC signature instead) ─
-const CSRF_EXEMPT = ['/api/v1/webhooks', '/api/csp-report'];
-
-// ─── CSP builder ─────────────────────────────────────────────────────────────
-function buildCsp(nonce: string, supabaseHost: string): string {
-  return [
+  // ─── Content-Security-Policy ─────────────────────────────────────────────
+  // style-src uses nonce, NOT unsafe-inline (W03 contract)
+  const cspHeader = [
     `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${
+      process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'"
+    }`,
     `style-src 'self' 'nonce-${nonce}'`,
-    `img-src 'self' data: blob: https:`,
-    `font-src 'self' data:`,
-    `connect-src 'self' https://${supabaseHost} wss://${supabaseHost}`,
-    `worker-src 'self' blob:`,
+    `img-src 'self' blob: data: https://*.supabase.co`,
+    `font-src 'self'`,
+    `connect-src 'self' https://*.supabase.co wss://*.supabase.co`,
+    `media-src 'self'`,
+    `worker-src 'self'`,
     `manifest-src 'self'`,
-    `frame-ancestors 'none'`,
+    `object-src 'none'`,
     `base-uri 'self'`,
     `form-action 'self'`,
-    `object-src 'none'`,
-    `require-trusted-types-for 'script'`,
-    `trusted-types app default 'allow-duplicates'`,
+    `frame-ancestors 'none'`,
+    `block-all-mixed-content`,
     `upgrade-insecure-requests`,
-    `report-uri /api/csp-report`,
+    `require-trusted-types-for 'script'`,
+    `trusted-types nextjs default`,
+    process.env.NEXT_PUBLIC_CSP_REPORT_URI
+      ? `report-uri ${process.env.NEXT_PUBLIC_CSP_REPORT_URI}`
+      : `report-uri /api/csp-report`,
   ].join('; ');
-}
 
-// ─── Sec-Fetch-Site check ────────────────────────────────────────────────────
-function isSameOriginRequest(req: NextRequest): boolean {
-  const fetchSite = req.headers.get('sec-fetch-site');
-  // Browser does not send sec-fetch-site for same-origin or direct navigation
-  return !fetchSite || fetchSite === 'same-origin' || fetchSite === 'same-site' || fetchSite === 'none';
-}
+  // ─── Forward nonce + CSP to route handlers ────────────────────────────────
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+  requestHeaders.set('x-csp-nonce', nonce);
+  requestHeaders.set('Content-Security-Policy', cspHeader);
 
-// ─── CSRF double-submit cookie validation ────────────────────────────────────
-function validateCsrf(req: NextRequest): boolean {
-  const cookieToken = req.cookies.get('__csrf')?.value;
-  const headerToken = req.headers.get('x-csrf-token');
-  if (!cookieToken || !headerToken) return false;
-  if (cookieToken.length !== headerToken.length) return false;
-  try {
-    return crypto.timingSafeEqual(
-      Buffer.from(cookieToken, 'hex'),
-      Buffer.from(headerToken, 'hex'),
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+
+  // ─── CSP ─────────────────────────────────────────────────────────────────
+  response.headers.set('Content-Security-Policy', cspHeader);
+
+  // ─── HSTS (2 years) ───────────────────────────────────────────────────────
+  // Only in production — dev doesn't have HTTPS
+  if (process.env.NODE_ENV === 'production') {
+    response.headers.set(
+      'Strict-Transport-Security',
+      'max-age=63072000; includeSubDomains; preload',
     );
-  } catch {
-    return false;
-  }
-}
-
-// ─── Middleware ───────────────────────────────────────────────────────────────
-export function middleware(req: NextRequest): NextResponse {
-  const { pathname } = req.nextUrl;
-  const method = req.method;
-
-  // CSRF enforcement on mutations
-  if (MUTATION_METHODS.has(method)) {
-    const isExempt = CSRF_EXEMPT.some((p) => pathname.startsWith(p));
-    if (!isExempt) {
-      if (!isSameOriginRequest(req)) {
-        return new NextResponse(
-          JSON.stringify({ ok: false, error: { code: 'CSRF_ORIGIN_REJECTED', message: 'Cross-origin mutations are not allowed' } }),
-          { status: 403, headers: { 'Content-Type': 'application/json' } },
-        );
-      }
-      if (!validateCsrf(req)) {
-        return new NextResponse(
-          JSON.stringify({ ok: false, error: { code: 'CSRF_TOKEN_INVALID', message: 'CSRF token missing or invalid' } }),
-          { status: 403, headers: { 'Content-Type': 'application/json' } },
-        );
-      }
-    }
   }
 
-  const nonce = crypto.randomBytes(16).toString('base64');
-  const supabaseUrl = process.env['NEXT_PUBLIC_SUPABASE_URL'] ?? '';
-  let supabaseHost = 'supabase.co';
-  try { supabaseHost = new URL(supabaseUrl).host; } catch { /* noop */ }
+  // ─── Click-jacking protection ─────────────────────────────────────────────
+  response.headers.set('X-Frame-Options', 'DENY');
 
-  const res = NextResponse.next();
+  // ─── MIME sniffing ────────────────────────────────────────────────────────
+  response.headers.set('X-Content-Type-Options', 'nosniff');
 
-  // Security headers
-  res.headers.set('Content-Security-Policy', buildCsp(nonce, supabaseHost));
-  res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
-  res.headers.set('X-Content-Type-Options', 'nosniff');
-  res.headers.set('X-Frame-Options', 'DENY');
-  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.headers.set('Permissions-Policy', 'camera=(), microphone=(self), geolocation=(), payment=(), usb=()');
-  res.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-  res.headers.set('Cross-Origin-Embedder-Policy', 'credentialless');
-  res.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+  // ─── Referrer leakage ────────────────────────────────────────────────────
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-  // Pass nonce to layout via header (read in layout.tsx)
-  res.headers.set('x-csp-nonce', nonce);
+  // ─── Permissions-Policy ──────────────────────────────────────────────────
+  response.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(self), geolocation=(), payment=(), usb=(), bluetooth=()',
+  );
 
-  return res;
+  // ─── Cross-Origin isolation ───────────────────────────────────────────────
+  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+  response.headers.set('Cross-Origin-Embedder-Policy', 'credentialless');
+  response.headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+
+  // ─── XSS protection (legacy browsers) ────────────────────────────────────
+  response.headers.set('X-XSS-Protection', '0'); // Disabled — CSP is authoritative
+
+  // ─── x-csp-nonce for server components ───────────────────────────────────
+  response.headers.set('x-csp-nonce', nonce);
+
+  return response;
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest).*)'],
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization)
+     * - favicon.ico, sitemap.xml, robots.txt
+     * - sw.js (Service Worker — must not have CSP header)
+     * - offline.html
+     * Note: /api/ IS matched — middleware adds security headers to all routes
+     */
+    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|sw\\.js|offline\\.html).*)',
+  ],
 };

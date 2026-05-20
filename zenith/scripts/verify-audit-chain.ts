@@ -5,7 +5,7 @@
  * Run: pnpm tsx scripts/verify-audit-chain.ts
  */
 
-import { computeMerkleRoot, merkleRootToHex, hexToMerkleRoot } from '../packages/audit/src/merkle.js'
+import { computeMerkleRoot, merkleRootToHex, hexToMerkleRoot } from '../packages/security/src/audit-chain.ts'
 
 async function main() {
   let passed = 0

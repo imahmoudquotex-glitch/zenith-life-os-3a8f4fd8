@@ -5,4 +5,13 @@ export const metadata: Metadata = {
   description: 'Sign in to your Zenith Life OS workspace.',
 }
 
-export { default } from './_page'
+import { Suspense } from 'react'
+import SignInPage from './_page'
+
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <SignInPage />
+    </Suspense>
+  )
+}

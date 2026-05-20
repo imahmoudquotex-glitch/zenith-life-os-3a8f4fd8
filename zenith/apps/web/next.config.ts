@@ -41,11 +41,10 @@ const nextConfig: NextConfig = {
       {
         source: '/(.*)',
         headers: [
-          // HSTS — 2 years, preload
-          {
+          ...(process.env.NODE_ENV === 'production' ? [{
             key: 'Strict-Transport-Security',
             value: 'max-age=63072000; includeSubDomains; preload',
-          },
+          }] : []),
           // Clickjacking protection
           {
             key: 'X-Frame-Options',
@@ -64,7 +63,7 @@ const nextConfig: NextConfig = {
           // Permissions
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(self), geolocation=(), payment=(), usb=()',
+            value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
           },
           // CORP / COOP
           {

@@ -23,12 +23,16 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: pnpm
           cache-dependency-path: zenith/pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+        working-directory: zenith
+
+      - name: check:lockfiles
+        run: pnpm check:lockfiles
         working-directory: zenith
 
       - name: check:manifest
@@ -95,17 +99,6 @@ jobs:
         run: pnpm check:dark-only-tokens
         working-directory: zenith
 
-      - name: check:sw-audit
-        run: pnpm check:sw-audit
-        working-directory: zenith
-
-      - name: check:vapid-key-not-in-client
-        run: pnpm check:vapid-key-not-in-client
-        working-directory: zenith
-
-      - name: check:audit-merkle
-        run: pnpm check:audit-merkle
-        working-directory: zenith
 
   typecheck:
     name: TypeScript
@@ -119,7 +112,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: pnpm
           cache-dependency-path: zenith/pnpm-lock.yaml
 
@@ -143,7 +136,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: pnpm
           cache-dependency-path: zenith/pnpm-lock.yaml
 

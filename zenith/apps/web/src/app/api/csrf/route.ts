@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import 'server-only';
 import { withEnvelope } from '@/lib/api-route';
 import { NextResponse } from 'next/server';

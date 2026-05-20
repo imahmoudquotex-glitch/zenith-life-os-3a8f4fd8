@@ -1,48 +1,40 @@
-import { getOfflineDB, type OutboxRow } from './db';
-import { calcNextAttempt } from './backoff';
-import { type Clock, systemClock } from '@zenith/shared/time';
+// packages/offline/src/sync.ts
+// Wave: W03 — Offline outbox sync engine
+
+import { getPendingMutations, markSynced, markFailed } from './outbox';
+import { calcNextAttempt, isDead } from './backoff';
+import { isOnline } from './connectivity';
 
 const MAX_ATTEMPTS = 8;
 
+type SyncStats = { ok: number; failed: number; dead: number };
+
+/**
+ * Read the CSRF cookie value (set by /api/csrf endpoint).
+ * Used to include CSRF token in sync requests.
+ */
 function readCsrfCookie(): string {
-  const match = document.cookie.match(/(?:^|; )__csrf=([^;]+)/);
-  return match?.[1] !== undefined ? decodeURIComponent(match[1]) : '';
+  if (typeof document === 'undefined') return '';
+  const match = document.cookie.match(/(?:^|;\s*)__csrf=([^;]*)/);
+  return match ? decodeURIComponent(match[1]!) : '';
 }
 
-export async function enqueueMutation(
-  row: Omit<OutboxRow, 'status' | 'attempts' | 'createdAt' | 'nextAttemptAt'>,
-  clock: Clock = systemClock,
-): Promise<void> {
-  const db = await getOfflineDB();
-  const now = clock.nowMs();
-  await db.put('outbox', {
-    ...row,
-    status: 'pending',
-    attempts: 0,
-    createdAt: now,
-    nextAttemptAt: now,
-  });
-}
+/**
+ * Process the sync queue — attempt to send all pending outbox mutations.
+ * Should be called:
+ *   - On online event
+ *   - On 60s interval when tab is visible
+ *   - After background sync event (Service Worker)
+ */
+export async function processSyncQueue(fetchFn = fetch): Promise<SyncStats> {
+  if (!isOnline()) return { ok: 0, failed: 0, dead: 0 };
 
-export async function processSyncQueue(
-  fetchFn: typeof fetch = fetch,
-  clock: Clock = systemClock,
-): Promise<{ ok: number; failed: number; dead: number }> {
-  const db = await getOfflineDB();
-  const stats = { ok: 0, failed: 0, dead: 0 };
-  const tx = db.transaction('outbox', 'readwrite');
-  const idx = tx.objectStore('outbox').index('byNextAttempt');
-  const now = clock.nowMs();
-  let cursor = await idx.openCursor();
-  while (cursor) {
-    const row = cursor.value as OutboxRow;
-    if (row.status === 'dead' || row.nextAttemptAt > now) {
-      cursor = await cursor.continue();
-      continue;
-    }
-    await cursor.update({ ...row, status: 'syncing' });
+  const stats: SyncStats = { ok: 0, failed: 0, dead: 0 };
+  const mutations = await getPendingMutations();
+
+  for (const row of mutations) {
     try {
-      const res = await fetchFn(`/api/sync/${row.mutation}`, {
+      const res = await fetchFn(`/api/v1/sync/${row.mutation}`, {
         method: 'POST',
         body: JSON.stringify(row.payload),
         headers: {
@@ -51,23 +43,74 @@ export async function processSyncQueue(
           'X-CSRF-Token': readCsrfCookie(),
         },
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      await cursor.delete();
+
+      if (res.status === 409) {
+        // Idempotency duplicate — already processed, safe to remove
+        await markSynced(row.id);
+        stats.ok++;
+        continue;
+      }
+
+      if (!res.ok) {
+        throw new Error(`HTTP_${res.status}`);
+      }
+
+      await markSynced(row.id);
       stats.ok++;
-    } catch (e) {
-      const attempts = row.attempts + 1;
-      const dead = attempts >= MAX_ATTEMPTS;
-      await cursor.update({
-        ...row,
-        status: dead ? 'dead' : 'failed',
-        attempts,
-        lastError: String(e),
-        nextAttemptAt: calcNextAttempt(attempts, clock),
-      });
+    } catch (err) {
+      const newAttempts = row.attempts + 1;
+      const dead = isDead(newAttempts, MAX_ATTEMPTS);
+      await markFailed(
+        row.id,
+        String(err),
+        calcNextAttempt(newAttempts),
+        dead,
+      );
       dead ? stats.dead++ : stats.failed++;
     }
-    cursor = await cursor.continue();
   }
-  await tx.done;
+
   return stats;
+}
+
+/**
+ * Start the sync engine — listens for online events + polls every 60s.
+ * Returns a cleanup function.
+ */
+export function startSyncEngine(): () => void {
+  let timer: ReturnType<typeof setInterval> | null = null;
+
+  const run = () => { void processSyncQueue(); };
+
+  // Sync on coming online
+  window.addEventListener('online', run);
+
+  // Poll every 60s when visible
+  const startTimer = () => {
+    timer = setInterval(() => {
+      if (document.visibilityState === 'visible') run();
+    }, 60_000);
+  };
+  const stopTimer = () => {
+    if (timer) { clearInterval(timer); timer = null; }
+  };
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      run();
+      startTimer();
+    } else {
+      stopTimer();
+    }
+  });
+
+  if (document.visibilityState === 'visible') {
+    run();
+    startTimer();
+  }
+
+  return () => {
+    window.removeEventListener('online', run);
+    stopTimer();
+  };
 }

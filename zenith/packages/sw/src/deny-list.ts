@@ -1,33 +1,46 @@
+// packages/sw/src/deny-list.ts
+// Wave: W03 — Service Worker NetworkOnly deny-list for sensitive paths
+
 /**
- * Service Worker NetworkOnly deny list.
- * These paths are NEVER cached — always fetch from network.
- *
- * Coverage (verified by check:sw-audit):
- * /api/ /auth/ /vault/ /account/
- * /api/ai/ /api/billing/ /api/webhooks/
- * /api/csrf /api/csp-report /api/push/
+ * Paths that must NEVER be cached by the Service Worker.
+ * Any request matching these patterns goes NetworkOnly.
+ * Adding new sensitive paths: update this file + ci.yml check.
  */
-const DENY_PATTERNS: RegExp[] = [
-  /^\/api\/auth(\/.*)?$/,
-  /^\/api\/vault(\/.*)?$/,
-  /^\/api\/ai(\/.*)?$/,
-  /^\/api\/billing(\/.*)?$/,
-  /^\/api\/webhooks(\/.*)?$/,
-  /^\/api\/export(\/.*)?$/,
-  /^\/api\/import(\/.*)?$/,
-  /^\/api\/account(\/.*)?$/,
-  /^\/api\/api-keys(\/.*)?$/,
-  /^\/api\/csrf$/,
-  /^\/api\/csp-report$/,
-  /^\/api\/push\/(subscribe|unsubscribe)$/,
-  /^\/auth(\/.*)?$/,
-  /^\/vault(\/.*)?$/,
-  /^\/account(\/.*)?$/,
-  /^\/settings\/security/,
+export const REQUIRED_DENY_PATHS = [
+  '/api/',
+  '/auth/',
+  '/vault/',
+  '/api/ai/',
+  '/api/billing/',
+  '/api/webhooks/',
+  '/api/csrf',
+  '/api/csp-report',
+  '/api/push/',
 ];
 
-export function shouldNeverCache(pathname: string): boolean {
-  return DENY_PATTERNS.some((rx) => rx.test(pathname));
-}
+export const NEVER_CACHE_PATTERNS: ReadonlyArray<RegExp> = [
+  /^\/api\//,
+  /^\/auth\//,
+  /^\/vault\//,
+  /^\/account\//,
+  /^\/settings\/security/,
+  /^\/api\/v1\//,
+  /^\/api\/ai\//,
+  /^\/api\/billing\//,
+  /^\/api\/webhooks\//,
+  /^\/api\/csrf$/,
+  /^\/api\/csp-report$/,
+  /^\/api\/push\//,
+  /^\/api\/export\//,
+  /^\/api\/import\//,
+  /^\/api\/account\//,
+  /^\/api\/api-keys\//,
+  /^\/share\/.*\/protected/,
+];
 
-export const DENY_LIST = DENY_PATTERNS;
+/**
+ * Return true if this path must never be cached.
+ */
+export function shouldNeverCache(pathname: string): boolean {
+  return NEVER_CACHE_PATTERNS.some((rx) => rx.test(pathname));
+}

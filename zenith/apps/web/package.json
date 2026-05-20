@@ -18,13 +18,13 @@
     "@supabase/supabase-js": "^2.49.4",
     "@supabase/ssr": "^0.6.1",
     "@zenith/shared": "workspace:*",
-    "@zenith/auth": "workspace:*",
-    "@zenith/workspaces": "workspace:*",
-    "@zenith/pages": "workspace:*",
-    "@zenith/permissions": "workspace:*",
-    "@zenith/audit": "workspace:*",
     "@zenith/idempotency": "workspace:*",
-    "@zenith/flags": "workspace:*"
+    "@zenith/security": "workspace:*",
+    "@zenith/vault-crypto": "workspace:*",
+    "@zenith/offline": "workspace:*",
+    "@zenith/pwa": "workspace:*",
+    "@zenith/push": "workspace:*",
+    "@zenith/sw": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5",

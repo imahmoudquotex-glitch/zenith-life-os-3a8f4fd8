@@ -9,9 +9,12 @@ on:
 jobs:
   db-safety:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: zenith
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@v4
         with:
           version: 9
       - uses: actions/setup-node@v4
@@ -26,10 +29,23 @@ jobs:
         env:
           POSTGRES_PASSWORD: test
           
+      - name: Wait for Postgres
+        run: |
+          until docker exec zenith-db-1 pg_isready -h localhost -p 5432 -U postgres; do
+            echo "Waiting for postgres..."
+            sleep 1
+          done
+          
       - name: Apply migrations safely (Idempotency proof)
         run: |
           for f in packages/db/migrations/*.sql; do
             psql postgresql://postgres:test@localhost:5432/postgres -f "$f"
+            psql postgresql://postgres:test@localhost:5432/postgres -f "$f"
+          done
+          
+      - name: Run pgTAP tests
+        run: |
+          for f in packages/db/tests/*.sql; do
             psql postgresql://postgres:test@localhost:5432/postgres -f "$f"
           done
           
