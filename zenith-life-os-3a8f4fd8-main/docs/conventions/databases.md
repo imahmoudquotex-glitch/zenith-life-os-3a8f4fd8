@@ -1,1 +1,0 @@
-# Convention: databases.md\n\nWave 07 Database Engine guidelines.\n

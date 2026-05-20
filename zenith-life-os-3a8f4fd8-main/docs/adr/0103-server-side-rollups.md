@@ -1,1 +1,0 @@
-# ADR: 0103-server-side-rollups.md\n\nStatus: Accepted\n\nContext: Wave 07 implementation.\n

@@ -1,1 +1,0 @@
-# ADR: 0105-cross-workspace-relation-blocked.md\n\nStatus: Accepted\n\nContext: Wave 07 implementation.\n

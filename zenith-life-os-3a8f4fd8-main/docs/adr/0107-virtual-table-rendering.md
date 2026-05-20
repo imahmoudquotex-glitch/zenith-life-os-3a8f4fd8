@@ -1,1 +1,0 @@
-# ADR: 0107-virtual-table-rendering.md\n\nStatus: Accepted\n\nContext: Wave 07 implementation.\n
