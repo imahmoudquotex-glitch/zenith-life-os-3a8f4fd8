@@ -1,1 +1,0 @@
-# ADR: 0111-csv-streaming-batch.md\n\nStatus: Accepted\n\nContext: Wave 07 implementation.\n

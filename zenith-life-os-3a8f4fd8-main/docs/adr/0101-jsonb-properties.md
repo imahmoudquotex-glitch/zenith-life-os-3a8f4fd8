@@ -1,1 +1,0 @@
-# ADR: 0101-jsonb-properties.md\n\nStatus: Accepted\n\nContext: Wave 07 implementation.\n
