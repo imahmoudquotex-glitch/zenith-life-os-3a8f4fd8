@@ -1,0 +1,156 @@
+name: Manifest & CI Checks
+
+on:
+  push:
+    branches: [main, "feat/**", "fix/**", "repair/**"]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  manifest:
+    name: Manifest Invariants (19 checks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: zenith/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: zenith
+
+      - name: check:manifest
+        run: pnpm check:manifest
+        working-directory: zenith
+
+      - name: check:naming
+        run: pnpm check:naming
+        working-directory: zenith
+
+      - name: check:rls
+        run: pnpm check:rls
+        working-directory: zenith
+
+      - name: check:migrations
+        run: pnpm check:migrations
+        working-directory: zenith
+
+      - name: check:crypto
+        run: pnpm check:crypto
+        working-directory: zenith
+
+      - name: check:tenants
+        run: pnpm check:tenants
+        working-directory: zenith
+
+      - name: check:money
+        run: pnpm check:money
+        working-directory: zenith
+
+      - name: check:vault-leak
+        run: pnpm check:vault-leak
+        working-directory: zenith
+
+      - name: check:audit-events
+        run: pnpm check:audit-events
+        working-directory: zenith
+
+      - name: check:routes-envelope
+        run: pnpm check:routes-envelope
+        working-directory: zenith
+
+      - name: check:idempotency
+        run: pnpm check:idempotency
+        working-directory: zenith
+
+      - name: check:no-sql-in-routes
+        run: pnpm check:no-sql-in-routes
+        working-directory: zenith
+
+      - name: check:no-ai-in-render
+        run: pnpm check:no-ai-in-render
+        working-directory: zenith
+
+      - name: check:timezone-hardcode
+        run: pnpm check:timezone-hardcode
+        working-directory: zenith
+
+      - name: check:worker-leases
+        run: pnpm check:worker-leases
+        working-directory: zenith
+
+      - name: check:dark-only-tokens
+        run: pnpm check:dark-only-tokens
+        working-directory: zenith
+
+      - name: check:sw-audit
+        run: pnpm check:sw-audit
+        working-directory: zenith
+
+      - name: check:vapid-key-not-in-client
+        run: pnpm check:vapid-key-not-in-client
+        working-directory: zenith
+
+      - name: check:audit-merkle
+        run: pnpm check:audit-merkle
+        working-directory: zenith
+
+  typecheck:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: zenith/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: zenith
+
+      - name: TypeScript check
+        run: pnpm typecheck
+        working-directory: zenith
+
+  lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: zenith/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: zenith
+
+      - name: Lint
+        run: pnpm lint
+        working-directory: zenith
