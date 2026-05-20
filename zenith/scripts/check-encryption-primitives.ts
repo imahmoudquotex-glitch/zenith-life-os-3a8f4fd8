@@ -8,13 +8,15 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 const FORBIDDEN = [
-  { pattern: 'AES-ECB', reason: 'Use AES-GCM or XChaCha20-Poly1305 instead' },
-  { pattern: 'createHash(\'md5\')', reason: 'MD5 is broken — use SHA-256 or BLAKE3' },
-  { pattern: 'createHash(\'sha1\')', reason: 'SHA1 is broken — use SHA-256 or BLAKE3' },
-  { pattern: '3DES', reason: 'Use AES-256 or XChaCha20-Poly1305' },
-  { pattern: 'RC4', reason: 'RC4 is broken — use ChaCha20' },
-  { pattern: 'DES-CBC', reason: 'Use AES-256-GCM' },
-  { pattern: 'Math.random()', reason: 'Use crypto.getRandomValues() for security-sensitive code' },
+  { pattern: /createCipheriv\s*\(\s*['"`]aes-\d+-ecb['"`]/i, reason: 'Use AES-GCM or XChaCha20-Poly1305 instead' },
+  { pattern: /createHash\s*\(\s*['"`]md5['"`]\s*\)/i, reason: 'MD5 is broken — use SHA-256 or BLAKE3' },
+  { pattern: /createHash\s*\(\s*['"`]sha1['"`]\s*\)/i, reason: 'SHA1 is broken — use SHA-256 or BLAKE3' },
+  { pattern: /\bMD5\b/gi, reason: 'MD5 algorithm string is forbidden' },
+  { pattern: /\bSHA-?1\b/gi, reason: 'SHA1 algorithm string is forbidden' },
+  { pattern: /\b3DES\b/gi, reason: 'Use AES-256 or XChaCha20-Poly1305' },
+  { pattern: /\bRC4\b/gi, reason: 'RC4 is broken — use ChaCha20' },
+  { pattern: /\bDES-CBC\b/gi, reason: 'Use AES-256-GCM' },
+  { pattern: /Math\.random\(\)/g, reason: 'Use crypto.getRandomValues() for security-sensitive code' },
 ]
 
 const SKIP_DIRS = ['node_modules', '.git', 'dist', '.next', 'coverage', 'docs']
@@ -32,8 +34,9 @@ function scanFile(filePath: string): void {
   const relativePath = filePath.replace(process.cwd(), '')
 
   for (const { pattern, reason } of FORBIDDEN) {
-    if (content.includes(pattern)) {
-      VIOLATIONS.push(`${relativePath}: Contains "${pattern}" — ${reason}`)
+    pattern.lastIndex = 0
+    if (pattern.test(content)) {
+      VIOLATIONS.push(`${relativePath}: Contains forbidden pattern — ${reason}`)
     }
   }
 }

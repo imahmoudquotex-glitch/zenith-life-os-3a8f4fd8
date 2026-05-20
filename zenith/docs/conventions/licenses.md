@@ -14,6 +14,8 @@ Phase 0/1 invariant: Strict supply chain control. We only allow permissive open-
 - `Zlib`
 - `Unlicense`
 - `Python-2.0`
+- `MPL-2.0`
+- `BlueOak-1.0.0`
 
 ## Prohibited Licenses
 - `GPL` (all versions)
@@ -22,7 +24,6 @@ Phase 0/1 invariant: Strict supply chain control. We only allow permissive open-
 - `SSPL`
 - `Elastic License`
 
-## Exceptions
-If a transitive dependency uses a non-standard or missing license but is otherwise proven permissive (e.g. "Public Domain" or "Custom: MIT-like"), it must be explicitly documented and overridden here.
-
-- *No current exceptions.*
+## Rationale for Exceptions
+- **MPL-2.0**: Accepted for transitive/runtime dependencies only, subject to review. It is a weak copyleft license applied at the file level. It does not infect the broader project but obligations increase if modified.
+- **BlueOak-1.0.0**: Accepted for direct and transitive dependencies. A modern, highly permissive license drafted by lawyers to be clearer than MIT. Safe and fully compatible with our zero-trust constraints.

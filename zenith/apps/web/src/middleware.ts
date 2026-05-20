@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const nonce = btoa(crypto.randomUUID());
   
   // Phase 0/1: Strict CSP + Trusted Types
   const cspHeader = `
@@ -19,6 +19,7 @@ export function middleware(request: NextRequest) {
     block-all-mixed-content;
     upgrade-insecure-requests;
     require-trusted-types-for 'script';
+    trusted-types nextjs default;
   `.replace(/\s{2,}/g, ' ').trim();
 
   const requestHeaders = new Headers(request.headers);
