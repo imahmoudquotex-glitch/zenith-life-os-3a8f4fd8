@@ -10,7 +10,7 @@ export abstract class TenantRepo extends BaseRepo {
   protected async setTenantContext(): Promise<void> {
     try {
       await this.client.query(`SELECT set_config('app.current_tenant', $1, true)`, [this.workspaceId]);
-    } catch (err) {
+    } catch {
       throw new InternalError();
     }
   }

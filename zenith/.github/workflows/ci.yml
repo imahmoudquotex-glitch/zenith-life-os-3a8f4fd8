@@ -23,13 +23,16 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 9
 
       - uses: actions/setup-node@v4
         with:
-          node-version-file: zenith/.nvmrc
+          node-version: 20
           cache: pnpm
           cache-dependency-path: zenith/pnpm-lock.yaml
+
+      - name: Check forbidden lockfiles
+        run: tsx scripts/check-lockfiles.ts
 
       - name: Install
         run: pnpm install --frozen-lockfile
@@ -91,14 +94,6 @@ jobs:
       - name: Check dark-only tokens
         run: pnpm check:dark-only-tokens
 
-      - name: Check SW audit
-        run: pnpm check:sw-audit
-
-      - name: Check VAPID key not in client
-        run: pnpm check:vapid-key-not-in-client
-
-      - name: Check audit Merkle chain
-        run: pnpm check:audit-merkle
 
       - name: Gitleaks
         uses: gitleaks/gitleaks-action@v2

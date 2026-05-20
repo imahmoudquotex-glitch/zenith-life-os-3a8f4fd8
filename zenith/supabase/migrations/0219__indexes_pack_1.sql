@@ -1,3 +1,14 @@
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- File:        0219__indexes_pack_1.sql
+-- Wave:        W02 (0219–0318)
+-- Description:  Indexes Pack 1
+-- Author:      zenith-system
+-- Created:     2026-05-20
+-- Idempotent:  YES (uses IF NOT EXISTS / OR REPLACE)
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEGIN;
+
 -- 0219__indexes_pack_1.sql
 -- Wave: W02
 -- Purpose: Additional indexes pack for W02 tables — performance hardening

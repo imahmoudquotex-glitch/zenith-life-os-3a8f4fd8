@@ -1,5 +1,5 @@
 import 'server-only';
-// @ts-ignore - Ignore missing module until implemented if not existing
+// @ts-expect-error - Ignore missing module until implemented if not existing
 import { createClient } from '@app/shared/supabase/server';
 import { ForbiddenError } from '@app/result';
 

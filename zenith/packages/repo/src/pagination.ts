@@ -8,10 +8,10 @@ export interface PaginatedResult<T> {
   nextCursor: string | null;
 }
 
-export function extractCursor(items: any[], limit: number): string | null {
+export function extractCursor(items: { id: string; [key: string]: unknown }[], limit: number): string | null {
   if (items.length > limit) {
     const nextItem = items.pop();
-    return nextItem.id;
+    return nextItem ? nextItem.id : null;
   }
   return null;
 }

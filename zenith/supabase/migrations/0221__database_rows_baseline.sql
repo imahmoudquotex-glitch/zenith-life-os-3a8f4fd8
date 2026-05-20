@@ -1,3 +1,14 @@
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- File:        0221__database_rows_baseline.sql
+-- Wave:        W02 (0221–0320)
+-- Description:  Database Rows Baseline
+-- Author:      zenith-system
+-- Created:     2026-05-20
+-- Idempotent:  YES (uses IF NOT EXISTS / OR REPLACE)
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEGIN;
+
 -- 0221__database_rows_baseline.sql
 -- Wave: W02
 -- Purpose: Database rows baseline table — full engine/relations/views deferred to Wave 07

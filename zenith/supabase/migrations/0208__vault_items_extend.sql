@@ -1,3 +1,14 @@
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- File:        0208__vault_items_extend.sql
+-- Wave:        W02 (0208–0307)
+-- Description:  Vault Items Extend
+-- Author:      zenith-system
+-- Created:     2026-05-20
+-- Idempotent:  YES (uses IF NOT EXISTS / OR REPLACE)
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEGIN;
+
 -- 0208__vault_items_extend.sql
 -- Wave: W02
 -- Purpose: Extend vault_items with ZKE encryption fields — no plaintext storage ever

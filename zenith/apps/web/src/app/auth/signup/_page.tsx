@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-export default function SignUpPage() {
+function SignUpForm() {
   const params = useSearchParams()
 
   const inviteToken = params.get('invite')
@@ -136,5 +136,15 @@ export default function SignUpPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+import { Suspense } from 'react'
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<div className="auth-page"><div className="auth-card"><div className="auth-title">Loading...</div></div></div>}>
+      <SignUpForm />
+    </Suspense>
   )
 }

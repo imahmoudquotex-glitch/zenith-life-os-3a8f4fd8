@@ -1,3 +1,14 @@
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- File:        0201__helpers_local_time.sql
+-- Wave:        W02 (0201–0300)
+-- Description:  Helpers Local Time
+-- Author:      zenith-system
+-- Created:     2026-05-20
+-- Idempotent:  YES (uses IF NOT EXISTS / OR REPLACE)
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEGIN;
+
 -- 0201__helpers_local_time.sql
 -- Wave: W02
 -- Purpose: Helper functions for timezone-aware date operations, updated_at triggers, and authorization

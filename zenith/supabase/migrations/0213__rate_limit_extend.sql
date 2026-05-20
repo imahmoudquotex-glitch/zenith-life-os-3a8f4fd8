@@ -1,3 +1,14 @@
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- File:        0213__rate_limit_extend.sql
+-- Wave:        W02 (0213–0312)
+-- Description:  Rate Limit Extend
+-- Author:      zenith-system
+-- Created:     2026-05-20
+-- Idempotent:  YES (uses IF NOT EXISTS / OR REPLACE)
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BEGIN;
+
 -- 0213__rate_limit_extend.sql
 -- Wave: W02
 -- Purpose: Extend rate_limit_buckets with DB fallback fields when Redis is unavailable

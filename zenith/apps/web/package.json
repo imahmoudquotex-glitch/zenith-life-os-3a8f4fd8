@@ -18,13 +18,7 @@
     "@supabase/supabase-js": "^2.49.4",
     "@supabase/ssr": "^0.6.1",
     "@zenith/shared": "workspace:*",
-    "@zenith/auth": "workspace:*",
-    "@zenith/workspaces": "workspace:*",
-    "@zenith/pages": "workspace:*",
-    "@zenith/permissions": "workspace:*",
-    "@zenith/audit": "workspace:*",
-    "@zenith/idempotency": "workspace:*",
-    "@zenith/flags": "workspace:*"
+    "@zenith/idempotency": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5",

@@ -14,8 +14,7 @@
   },
   "dependencies": {
     "@zenith/shared": "workspace:*",
-    "@zenith/db": "workspace:*",
-    "@zenith/audit": "workspace:*"
+    "@zenith/db": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.7.0",
