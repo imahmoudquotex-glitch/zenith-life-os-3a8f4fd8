@@ -1,0 +1,39 @@
+name: Manifest Invariant Check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  manifest:
+    name: Check architectural invariants
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: zenith/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: zenith
+
+      - name: Run manifest check
+        run: pnpm check:manifest
+        working-directory: zenith
+
+      - name: Run all checks
+        run: pnpm check:all
+        working-directory: zenith
+
+      - name: TypeScript check
+        run: pnpm typecheck
+        working-directory: zenith
