@@ -47,12 +47,12 @@
     "db:migrate": "supabase db push",
     "db:reset": "supabase db reset",
     "db:gen-types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > packages/shared/src/types/database.ts",
-    "check:audit-merkle": "tsx scripts/verify-audit-chain.ts"
+    "check:audit-merkle": "tsx scripts/check-audit-merkle.ts",
+    "check:all:w03": "pnpm check:sw-audit && pnpm check:vapid-key-not-in-client && pnpm check:audit-merkle && pnpm check:crypto && pnpm check:vault-leak"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^25.8.0",
-    "@types/pg": "^8.20.0",
     "eslint": "^10.4.0",
     "glob": "^13.0.6",
     "globals": "^17.6.0",

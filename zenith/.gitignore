@@ -42,8 +42,20 @@ supabase/.temp/
 *.pem
 *.key
 *.p12
+*.p8
 .secret
 vault-keys/
+# Temporary secret files (e.g. jwt_secret_tmp.txt, keys.json)
+*secret_tmp*
+*_tmp.txt
+*_tmp.json
+keys.json
+vapid-keys.json
+*.pfx
+*.crt
+# Environment overrides never committed
+.env.production
+.env.staging
 
 # Generated
 packages/shared/src/types/database.ts

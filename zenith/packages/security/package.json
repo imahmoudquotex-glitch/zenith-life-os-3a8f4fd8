@@ -1,10 +1,24 @@
 {
-  "name": "@app/security",
+  "name": "@zenith/security",
   "version": "0.1.0",
-  "main": "src/index.ts",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": { ".": "./src/index.ts" },
   "scripts": {
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "server-only": "*",
+    "@supabase/supabase-js": "^2.49.4",
+    "@zenith/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.0"
   }
 }
