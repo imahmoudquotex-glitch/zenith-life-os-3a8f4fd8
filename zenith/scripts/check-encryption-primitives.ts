@@ -17,7 +17,13 @@ const FORBIDDEN = [
   { pattern: 'Math.random()', reason: 'Use crypto.getRandomValues() for security-sensitive code' },
 ]
 
-const SKIP_DIRS = ['node_modules', '.git', 'dist', '.next', 'coverage', 'scripts', 'docs']
+const SKIP_DIRS = ['node_modules', '.git', 'dist', '.next', 'coverage', 'docs']
+const SKIP_FILES = [
+  'invariants.ts',
+  'check-encryption-primitives.ts', // defines forbidden list
+  'check-naming.ts',                // references forbidden algos for naming validation
+  'check-manifest.ts',              // documents invariants
+] // allowlist: these MENTION forbidden strings for documentation/checking purposes
 const SCAN_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx', '.sql', '.mjs']
 const VIOLATIONS: string[] = []
 
@@ -41,7 +47,9 @@ function scanDir(dir: string): void {
         scanDir(fullPath)
       }
     } else if (SCAN_EXTENSIONS.some(ext => entry.name.endsWith(ext))) {
-      scanFile(fullPath)
+      if (!SKIP_FILES.includes(entry.name)) {
+        scanFile(fullPath)
+      }
     }
   }
 }
