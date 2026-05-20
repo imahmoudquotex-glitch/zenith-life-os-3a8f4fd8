@@ -1,0 +1,18 @@
+{
+    "main": "src/index.ts",
+    "name": "@app/vault-crypto",
+    "version": "0.1.0",
+    "scripts": {
+        "test": "vitest run",
+        "build": "tsc",
+        "lint": "eslint src/"
+    },
+    "devDependencies": {
+        "argon2-browser": "^1.18.0"
+    },
+    "dependencies": {
+        "@noble/ciphers": "^2.2.0",
+        "@noble/hashes": "^2.2.0",
+        "@zenith/shared": "workspace:*"
+    }
+}

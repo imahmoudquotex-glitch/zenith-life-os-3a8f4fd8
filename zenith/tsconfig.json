@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "useUnknownInCatchVariables": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "paths": {
+      "@zenith/shared/*": ["./packages/shared/src/*"],
+      "@zenith/ai/*": ["./packages/ai/src/*"],
+      "@zenith/crypto/*": ["./packages/crypto/src/*"],
+      "@zenith/vault/*": ["./packages/vault/src/*"],
+      "@zenith/audit/*": ["./packages/audit/src/*"],
+      "@zenith/idempotency/*": ["./packages/idempotency/src/*"],
+      "@zenith/flags/*": ["./packages/flags/src/*"],
+      "@zenith/i18n/*": ["./packages/i18n/src/*"],
+      "@zenith/db/*": ["./packages/db/src/*"],
+      "@/*": ["./apps/web/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "dist", ".next", "coverage", "packages/sw"]
+}

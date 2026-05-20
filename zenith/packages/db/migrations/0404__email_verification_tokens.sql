@@ -1,0 +1,13 @@
+﻿-- 0404__email_verification_tokens.sql — Wave W04
+BEGIN;
+CREATE TABLE IF NOT EXISTS email_verification_tokens (
+  id          TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  user_id     TEXT NOT NULL REFERENCES users(id),
+  email       TEXT NOT NULL,
+  token_hash  BYTEA NOT NULL UNIQUE,
+  expires_at  TIMESTAMPTZ NOT NULL DEFAULT (now() + interval '24 hours'),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  consumed_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_email_verify_user ON email_verification_tokens(user_id, created_at DESC);
+COMMIT;

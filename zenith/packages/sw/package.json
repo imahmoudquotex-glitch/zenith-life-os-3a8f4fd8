@@ -1,0 +1,10 @@
+{
+    "main":  "src/index.ts",
+    "name":  "@app/sw",
+    "version":  "0.1.0",
+    "scripts":  {
+                    "test":  "vitest run",
+                    "build":  "tsc",
+                    "lint":  "eslint src/"
+                }
+}

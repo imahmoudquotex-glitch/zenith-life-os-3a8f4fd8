@@ -1,0 +1,13 @@
+{
+    "main": "src/index.ts",
+    "name": "@app/offline",
+    "version": "0.1.0",
+    "scripts": {
+        "test": "vitest run",
+        "build": "tsc",
+        "lint": "eslint src/"
+    },
+    "dependencies": {
+        "idb": "^8.0.3"
+    }
+}

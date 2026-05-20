@@ -1,0 +1,12 @@
+-- 0305__vault_envelope_extend.sql
+-- Wave: W03
+BEGIN;
+ALTER TABLE vault_items
+  ADD COLUMN IF NOT EXISTS algo TEXT NOT NULL DEFAULT 'AES-GCM-256',
+  ADD COLUMN IF NOT EXISTS iv BYTEA,
+  ADD COLUMN IF NOT EXISTS auth_tag BYTEA,
+  ADD COLUMN IF NOT EXISTS wrapped_item_key BYTEA,
+  ADD COLUMN IF NOT EXISTS aad TEXT;
+ALTER TABLE vault_items
+  ADD CONSTRAINT chk_vault_algo CHECK (algo IN ('AES-GCM-256'));
+COMMIT;

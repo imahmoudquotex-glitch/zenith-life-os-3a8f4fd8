@@ -1,0 +1,12 @@
+# Zenith Life OS — CODEOWNERS
+# Require review for critical paths
+
+# Architecture & Security
+/packages/crypto/    @security-team
+/packages/vault/     @security-team
+/packages/ai/        @ai-team
+/supabase/migrations/ @db-team
+
+# CI & Scripts
+/.github/            @platform-team
+/scripts/            @platform-team

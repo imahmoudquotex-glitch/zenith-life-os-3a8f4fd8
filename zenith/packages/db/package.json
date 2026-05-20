@@ -1,0 +1,11 @@
+{
+  "name": "@zenith/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test:rls": "echo 'pgTAP tests — requires running Postgres'"
+  }
+}

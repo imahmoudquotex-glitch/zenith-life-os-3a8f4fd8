@@ -1,0 +1,49 @@
+# Root Dependencies
+node_modules/
+.pnpm-store/
+
+# Zenith Nested Backup
+zenith/.git_backup/
+
+# Nested Node Modules and builds
+**/node_modules/
+**/dist/
+**/.next/
+**/out/
+**/build/
+
+# Environment configurations and secrets
+**/.env
+**/.env.local
+**/.env.*.local
+!**/.env.example
+**/*.pem
+**/*.key
+**/*.p12
+**/.secret
+**/vault-keys/
+**/jwt_secret_tmp.txt
+**/keys.json
+
+# IDEs and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Testing and Logs
+**/coverage/
+**/test-results/
+**/playwright-report/
+**/*.log
+**/npm-debug.log*
+**/pnpm-debug.log*
+
+# Supabase Local Settings
+**/supabase/.temp/
+
+# Generated Files
+**/packages/shared/src/types/database.ts

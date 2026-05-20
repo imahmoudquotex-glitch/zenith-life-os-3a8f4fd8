@@ -1,0 +1,3 @@
+// apps/worker — BullMQ background worker
+// Will be scaffolded in Wave 03
+export {}

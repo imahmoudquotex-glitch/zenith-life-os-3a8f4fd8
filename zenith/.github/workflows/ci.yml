@@ -1,0 +1,61 @@
+name: CI
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint --max-warnings 0
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Check naming
+        run: pnpm check:naming
+
+      - name: Check migrations
+        run: pnpm check:migrations
+
+      - name: Check RLS
+        run: pnpm check:rls
+
+      - name: Check crypto primitives
+        run: pnpm check:crypto
+
+      - name: Check tenant boundaries
+        run: pnpm check:tenants
+
+      - name: Check money columns
+        run: pnpm check:money
+
+      - name: Check vault leaks
+        run: pnpm check:vault-leak
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build
+        run: pnpm build
